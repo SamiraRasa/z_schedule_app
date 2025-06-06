@@ -1,0 +1,24 @@
+{
+  "generationParameters": {
+    "generationDate": "Fri Jun 06 2025 13:52:44 GMT+0000 (Coordinated Universal Time)",
+    "generatorPlatform": "SAP Business Application Studio",
+    "serviceType": "OData Url",
+    "metadataFilename": "",
+    "serviceUrl": "https://my419285-api.s4hana.cloud.sap/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002",
+    "appName": "schedule_upload",
+    "appTitle": "Schedule Upload ",
+    "appDescription": "Schedule Excel Upload  ",
+    "appNamespace": "at.zeta.ppm",
+    "ui5Theme": "sap_horizon",
+    "ui5Version": "1.130.10",
+    "enableCodeAssist": false,
+    "enableEslint": false,
+    "enableTypeScript": false,
+    "showMockDataInfo": true,
+    "generatorVersion": "1.18.0",
+    "template": "Basic V2",
+    "generatorName": "SAP Fiori Application Generator",
+    "entityRelatedConfig": [],
+    "launchText": "In order to launch the generated app, simply run the following from the generated app root folder:\n\n```\n    npm start\n```"
+  }
+}
