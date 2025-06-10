@@ -1,3 +1,5 @@
+sap.ui.requireSync("at/zeta/ppm/scheduleupload/util/loaderConfig");
+
 sap.ui.define([
     "sap/ui/core/UIComponent",
     "at/zeta/ppm/scheduleupload/model/models"

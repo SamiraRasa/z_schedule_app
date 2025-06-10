@@ -16,25 +16,25 @@ sap.ui.define([
 
         onInit() {
             this._reset();
-           
-          
+
+
 
         },
         _reset: function () {
             this.setViewModel(new sap.ui.model.json.JSONModel({
-            fileName: null,
-            filePath: null,
-            uploadStatus: "",
-            uploadStatusMessage: this.i18n().getText("status.noFileSelected"),
-            busy: false,
-            scheduleData: [],
-           
+                fileName: null,
+                filePath: null,
+                uploadStatus: "",
+                uploadStatusMessage: this.i18n().getText("status.noFileSelected"),
+                busy: false,
+                scheduleData: [],
+
             }));
         },
-          _setBusy: function (bBusy) {
+        _setBusy: function (bBusy) {
             const oViewModel = this.getViewModel();
 
-            
+
             if (!bBusy) {
                 setTimeout(() => {
                     oViewModel.setProperty("/busy", false);
@@ -80,51 +80,61 @@ sap.ui.define([
             );
         },
 
-       
 
-         onFileChange: async function (oEvent) {
-                this._reset();
-                const oViewModel = this.getViewModel();
-                this._setBusy(true);
-                oViewModel.setProperty("/uploadStatus", "P");
-                oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadInProgress"));
 
-                try {
-                    const data = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = evt => resolve(evt.target.result);
-                        reader.onerror = evt => reject(evt.target.error || new Error("File read error"));
-                        reader.readAsArrayBuffer(oFile);
-                    })
-                    // const oFile = oEvent.getParameter("files")?.[0];
-                    // if (!oFile || !window.FileReader) {
-                    //     this._setBusy(false);
-                    //     MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
-                    //     return;
-                    // }
-                    const sExtension = oFile.name.split('.').pop().toLowerCase();
-                    if (sExtension !== "xlsx") {
-                        this._setBusy(false);
-                        MessageToast.show(this.i18n().getText("message.wrongFileFormat"));
-                        oViewModel.setProperty("/uploadStatus", "W");
-                        oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.wrongFileFormat"));
-                        return;
-                    }
-                
-                    MessageToast.show("The file is valid! Next step: reading the file...");
-                } catch (error) {
-                    const sErrorMsg = error instanceof Error ? error.message : String(error);
-                    MessageBox.error(sErrorMsg);
-                    oViewModel.setProperty("/uploadStatus", "E");
-                    oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadingFailed"));
-                } finally {
-                    this._setBusy(false);
-                    const oFileUploader = this.byId("fileUploader");
-                    oFileUploader.setValueState("None");
-                    oFileUploader.setValueStateText("");
-                    oFileUploader.setValue("");
-                }
+        onFileChange: async function (oEvent) {
+            this._reset();
+            const oViewModel = this.getViewModel();
+            this._setBusy(true);
+            oViewModel.setProperty("/uploadStatus", "P");
+            oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadInProgress"));
+
+            // Retrieve file from event and check preconditions
+            const oFile = oEvent.getParameter("files") && oEvent.getParameter("files")[0];
+            if (!oFile || !window.FileReader) {
+                this._setBusy(false);
+                MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
+                return;
             }
+            const sExtension = oFile.name.split('.').pop().toLowerCase();
+            if (sExtension !== "xlsx") {
+                this._setBusy(false);
+                MessageToast.show(this.i18n().getText("message.wrongFileFormat"));
+                oViewModel.setProperty("/uploadStatus", "W");
+                oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.wrongFileFormat"));
+                return;
+            }
+
+            try {
+                const data = await new Promise((resolve, reject) => {
+                    debugger;
+                    const reader = new FileReader();
+                    reader.onload = evt => resolve(evt.target.result);
+                    reader.onerror = evt => reject(evt.target.error || new Error("File read error"));
+                    reader.readAsArrayBuffer(oFile);
+                });
+
+                // Parse Excel workbook(s)
+                const workbook = XLSX.read(data, { type: "binary" });
+                workbook.SheetNames.forEach(sheetName => {
+                    const worksheet = workbook.Sheets[sheetName];
+
+                });
+
+                MessageToast.show("The file is valid! Next step: reading the file...");
+            } catch (error) {
+                const sErrorMsg = error instanceof Error ? error.message : String(error);
+                MessageBox.error(sErrorMsg);
+                oViewModel.setProperty("/uploadStatus", "E");
+                oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadingFailed"));
+            } finally {
+                this._setBusy(false);
+                const oFileUploader = this.byId("fileUploader");
+                oFileUploader.setValueState("None");
+                oFileUploader.setValueStateText("");
+                oFileUploader.setValue("");
+            }
+        }
 
 
 
