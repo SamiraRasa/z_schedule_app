@@ -17,7 +17,7 @@
     },
     "dataSources": {
       "mainService": {
-        "uri": "/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002/",
+        "uri": "/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV/",
         "type": "OData",
         "settings": {
           "annotations": [],
@@ -39,8 +39,13 @@
           }
         }
       }
-    }
+    },
+    "embeds": [
+      "thirdparty/customcontrol/spreadsheetimporter/v1_7_3"
+    ]
   },
+   
+ 
   "sap.ui": {
     "technology": "UI5",
     "icons": {
@@ -89,6 +94,9 @@
           "uri": "css/style.css"
         }
       ]
+    },
+    "resourceRoots": {
+      "xlsx": "./externalLibs/xlsx_full_min"
     },
     "routing": {
       "config": {

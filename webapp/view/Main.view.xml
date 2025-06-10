@@ -1,6 +1,132 @@
-<mvc:View controllerName="at.zeta.ppm.scheduleupload.controller.Main"
+<mvc:View
+    controllerName="at.zeta.ppm.scheduleupload.controller.Main"
     xmlns:mvc="sap.ui.core.mvc"
-    xmlns="sap.m">
-    <Page id="page" title="{i18n>title}">
-    </Page>
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:core="sap.ui.core"
+    xmlns:u="sap.ui.unified"
+    xmlns:l="sap.ui.layout"
+    xmlns:layout="sap.ui.layout"
+    xmlns:upload="sap.m.upload"
+    height="100%"
+ >
+    <f:DynamicPage
+        id="dynamicPageId"
+        busy="{/busy}"
+        >
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title
+                        text="{= ${/fileName} ? ${/fileName} : ${i18n>title} }"
+                        level="H4"
+                    />
+                </f:heading>
+                <f:expandedContent>
+                    <Label text="{i18n>subtitle}" />
+                </f:expandedContent>
+                <f:content>
+                    <OverflowToolbar>
+                        <ObjectStatus
+                            text="{/uploadStatusMessage}"
+                            state="{path: '/uploadStatus', formatter: '.formatter.formatStatusState'}"
+                            inverted="true"
+                            class="bigStatusText"
+                        />
+                    </OverflowToolbar>
+                </f:content>
+            </f:DynamicPageTitle>
+        </f:title>
+        <f:content>
+            <Table
+                id="idTimesheetTable"
+                items="{viewModel>/scheduleData}"
+                growing="false"
+                growingThreshold="10"
+                sticky="ColumnHeaders"
+            >
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <u:FileUploader
+                            id="fileUploader"
+                            fileType="xlsx"
+                            maximumFileSize="5"
+                            icon="sap-icon://upload"
+                            change="onFileChange"
+                            tooltip="{i18n>button.selectFile}"
+                            style="Emphasized"
+                            buttonText="{i18n>button.selectFile}"
+                            class="sapUiSmallMarginStart"
+                            dragDropEnabled="true"
+                            typeMissmatch="handleTypeMissmatch"
+                            
+                           
+                        />
+                        <ToolbarSpacer />
+                        <Button
+                            id="btnDownloadExampleFile"
+                            text="{i18n>button.exampleFileDownload}"
+                            type="Transparent"
+                            icon="sap-icon://excel-attachment"
+                            press=".onExcelTemplateFileExport"
+                            tooltip="{i18n>button.exampleFileDownload.tooltip}"
+                        />
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column>
+                        <Text text="{i18n>table.header.ProjectID}" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Text text="{i18n>table.header.WbsID}" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Text text="{i18n>table.header.PlannedStartDate}" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Text text="{i18n>table.header.PlannedEndDate}" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Text text="{i18n>table.header.BaselineStartDate}" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Text text="{i18n>table.header.BaselineEndDate}" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Text text="{i18n>table.header.Milestone}" />
+                    </Column>
+                     <Column hAlign="Center">
+                        <Text text="{i18n>table.header.Status}" />
+                    </Column>
+                     <Column>
+                        <Text text="{i18n>table.header.StatusMessage}" />
+                    </Column>
+                    <Column>
+                        <Text text="{i18n>table.header.Description}" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{projectId}" />
+                            <Text text="{wbsId}" />
+                            <Text text="{plannedStartDate}" />
+                            <Text text="{plannedEndDate}" />
+                            <Text text="{baselineStartDate}" />
+                            <Text text="{baselineEndDate}" />
+                            <Text text="{milestone}" />
+                            <ObjectStatus
+                                text="{path: 'status', formatter: '.formatter.formatStatusText'}"
+                                icon="{path: 'status', formatter: '.formatter.formatStatusIcon'}"
+                                state="{path: 'status', formatter: '.formatter.formatStatusState'}"
+                                inverted="true"
+                            />
+                            <Text text="{statusMessage}" />
+                            <Text text="{description}" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </f:content>
+    </f:DynamicPage>
 </mvc:View>

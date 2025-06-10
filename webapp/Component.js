@@ -7,6 +7,7 @@ sap.ui.define([
     return UIComponent.extend("at.zeta.ppm.scheduleupload.Component", {
         metadata: {
             manifest: "json",
+            config: { fullWidth: true },
             interfaces: [
                 "sap.ui.core.IAsyncContentCreation"
             ]
