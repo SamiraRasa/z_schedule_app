@@ -9,11 +9,11 @@
     xmlns:layout="sap.ui.layout"
     xmlns:upload="sap.m.upload"
     height="100%"
- >
+>
     <f:DynamicPage
         id="dynamicPageId"
         busy="{/busy}"
-        >
+    >
         <f:title>
             <f:DynamicPageTitle>
                 <f:heading>
@@ -38,12 +38,14 @@
             </f:DynamicPageTitle>
         </f:title>
         <f:content>
+
             <Table
-                id="idTimesheetTable"
-                items="{viewModel>/scheduleData}"
-                growing="false"
-                growingThreshold="10"
+                id="idscheduleTable"
+                items="{/scheduleData}"
+                growing="true"
+                growingThreshold="20"
                 sticky="ColumnHeaders"
+                type="Responsive"
             >
                 <headerToolbar>
                     <OverflowToolbar>
@@ -57,10 +59,7 @@
                             style="Emphasized"
                             buttonText="{i18n>button.selectFile}"
                             class="sapUiSmallMarginStart"
-                            dragDropEnabled="true"
                             typeMissmatch="handleTypeMissmatch"
-                            
-                           
                         />
                         <ToolbarSpacer />
                         <Button
@@ -74,46 +73,50 @@
                     </OverflowToolbar>
                 </headerToolbar>
                 <columns>
-                    <Column>
-                        <Text text="{i18n>table.header.ProjectID}" />
+                    <Column minScreenWidth="Tablet" demandPopin="false">
+                        <Text text="{i18n>table.header.ProjectId}" />
                     </Column>
-                    <Column hAlign="Center">
-                        <Text text="{i18n>table.header.WbsID}" />
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
+                        <Text text="{i18n>table.header.WbsId}" />
                     </Column>
-                    <Column hAlign="Center">
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.PlannedStartDate}" />
                     </Column>
-                    <Column hAlign="Center">
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.PlannedEndDate}" />
                     </Column>
-                    <Column hAlign="Center">
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.BaselineStartDate}" />
                     </Column>
-                    <Column hAlign="Center">
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.BaselineEndDate}" />
                     </Column>
-                    <Column hAlign="Center">
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.Milestone}" />
                     </Column>
-                     <Column hAlign="Center">
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.Status}" />
                     </Column>
-                     <Column>
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.StatusMessage}" />
                     </Column>
-                    <Column>
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.Description}" />
                     </Column>
                 </columns>
                 <items>
                     <ColumnListItem>
                         <cells>
-                            <Text text="{projectId}" />
+                            <ObjectIdentifier title="{projectId}" />
                             <Text text="{wbsId}" />
-                            <Text text="{plannedStartDate}" />
-                            <Text text="{plannedEndDate}" />
-                            <Text text="{baselineStartDate}" />
-                            <Text text="{baselineEndDate}" />
+                            <Text
+                                text="{path: 'plannedStartDate', formatter: '.formatter.formatDate'}" />
+                            <Text
+                                text="{path: 'plannedEndDate', formatter: '.formatter.formatDate'}" />
+                            <Text
+                                text="{path: 'baselineStartDate', formatter: '.formatter.formatDate'}" />
+                            <Text
+                                text="{path: 'baselineEndDate', formatter: '.formatter.formatDate'}" />
                             <Text text="{milestone}" />
                             <ObjectStatus
                                 text="{path: 'status', formatter: '.formatter.formatStatusText'}"

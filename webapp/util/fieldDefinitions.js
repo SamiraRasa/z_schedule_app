@@ -19,17 +19,19 @@ sap.ui.define([
 
      */
     const ScheduleFields = Object.freeze({
-        PROGECT_ID : "projectId",
+        PROJECT_ID: "projectId",
         WBS_ID: "wbsId",
-        PLANNED_START_DATE: "plannedStartDate", 
+        PLANNED_START_DATE: "plannedStartDate",
         PLANNED_END_DATE: "plannedEndDate",
         BASELINE_START_DATE: "baselineStartDate",
         BASELINE_END_DATE: "baselineEndDate",
         MILESTONE: "milestone",
+        STATUS: "status",
+        STATUS_MESSAGE: "statusMessage",
         DESCRIPTION: "description",
-       
-        
-      
+
+
+
     });
 
     /**
@@ -54,108 +56,115 @@ sap.ui.define([
         //     return [
         //         ScheduleFields.PROGECT_ID,
         //         ScheduleFields.WBS_ID,
-               
-              
+
+
         //     ];
         // },
 
         getTemplateColumnConfig: function () {
-       return [ 
+            return [
 
-            { 
-                property: "projectId", 
-                type: EdmType.String, 
-                template: { 
-                    content: "{projectId}" 
-                }, 
-                width: 20 
-            }, 
+                {
+                    property: "projectId",
+                    type: EdmType.String,
+                    template: {
+                        content: "{projectId}"
+                    },
+                    width: 20
+                },
 
-            {   property: "wbsId", 
-                type: EdmType.String, 
-                template: { 
-                    content: "{wbsId}" 
-                }, 
-                width: 25 
-            }, 
+                {
+                    property: "wbsId",
+                    type: EdmType.String,
+                    template: {
+                        content: "{wbsId}"
+                    },
+                    width: 25
+                },
 
-            {   property: "plannedStartDate", 
-                type: EdmType.Date, 
-                inputFormat: "dd.MM.yyyy", 
-                template: { 
-                    content: "{plannedStartDate}", 
-                    format: "dd.MM.yyyy" 
+                {
+                    property: "plannedStartDate",
+                    type: EdmType.Date,
+                    inputFormat: "dd.MM.yyyy",
+                    template: {
+                        content: "{plannedStartDate}",
+                        format: "dd.MM.yyyy"
 
-                }, 
-                width: 15 
-            }, 
+                    },
+                    width: 15
+                },
 
-            { property: "plannedEndDate", 
-                type: EdmType.Date, 
-                inputFormat: "dd.MM.yyyy", 
-                template: { 
-                    content: "{plannedEndDate}", 
-                    format: "dd.MM.yyyy" 
-                }, 
-                width: 15 
-            }, 
+                {
+                    property: "plannedEndDate",
+                    type: EdmType.Date,
+                    inputFormat: "dd.MM.yyyy",
+                    template: {
+                        content: "{plannedEndDate}",
+                        format: "dd.MM.yyyy"
+                    },
+                    width: 15
+                },
 
-            { property: "baselineStartDate", 
-                type: EdmType.Date, 
-                inputFormat: "dd.MM.yyyy", 
-                template: { 
-                    content: "{baselineStartDate}", 
-                    format: "dd.MM.yyyy" 
-                }, 
-                width: 15 
-            }, 
+                {
+                    property: "baselineStartDate",
+                    type: EdmType.Date,
+                    inputFormat: "dd.MM.yyyy",
+                    template: {
+                        content: "{baselineStartDate}",
+                        format: "dd.MM.yyyy"
+                    },
+                    width: 15
+                },
 
-            {   property: "baselineEndDate", 
-                type: EdmType.Date,            
-                inputFormat: "dd.MM.yyyy", 
-                template: { 
-                    content: "{baselineEndDate}", 
-                    format: "dd.MM.yyyy" 
+                {
+                    property: "baselineEndDate",
+                    type: EdmType.Date,
+                    inputFormat: "dd.MM.yyyy",
+                    template: {
+                        content: "{baselineEndDate}",
+                        format: "dd.MM.yyyy"
 
-                }, 
-                width: 15 
+                    },
+                    width: 15
 
-            }, 
-            {  property: "milestone", 
-                type: EdmType.String, 
-                template: { 
-                    content: "{milestone}" 
-                }, 
-                width: 10 
+                },
+                {
+                    property: "milestone",
+                    type: EdmType.String,
+                    template: {
+                        content: "{milestone}"
+                    },
+                    width: 10
 
-            }, 
+                },
 
-            {  property: "description", 
-                type: EdmType.String, 
-                template: { 
-                    content: "{description}" 
-                }, 
-                width: 40 
+                {
+                    property: "description",
+                    type: EdmType.String,
+                    template: {
+                        content: "{description}"
+                    },
+                    width: 40
 
-            }, 
+                },
 
 
-        ]; 
+            ];
         },
 
-           getTemplateExampleRow: function (i18n) {
-            
-            
+        getTemplateExampleRow: function (i18n) {
+
+
             return {
                 [ScheduleFields.PROGECT_ID]: i18n.getText("template.column.example." + ScheduleFields.PROGECT_ID),
-                [ScheduleFields.WBS_ID]: i18n.getText("template.column.example." + ScheduleFields.WBS_ID),  
+                [ScheduleFields.WBS_ID]: i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
                 [ScheduleFields.PLANNED_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_START_DATE),
                 [ScheduleFields.PLANNED_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_END_DATE),
                 [ScheduleFields.BASELINE_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.BASELINE_START_DATE),
                 [ScheduleFields.BASELINE_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.BASELINE_END_DATE),
                 [ScheduleFields.MILESTONE]: i18n.getText("template.column.example." + ScheduleFields.MILESTONE),
                 [ScheduleFields.DESCRIPTION]: i18n.getText("template.column.example." + ScheduleFields.DESCRIPTION),
-               
+
             };
         }
 
@@ -165,6 +174,6 @@ sap.ui.define([
 
 
 
-    
-  
+
+
 
