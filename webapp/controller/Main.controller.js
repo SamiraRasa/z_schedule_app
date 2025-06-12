@@ -19,16 +19,12 @@ sap.ui.define([
 
         // === Initialisierung ===
         onInit() {
-             this._reset();
-            // this.oMessageManager = sap.ui.getCore().getMessageManager();
-            // this.oMessageManager.registerObject(this.getView(), true);
-            // this.oModel = this.getView().getModel();
-            // if (!this.oModel || typeof this.oModel.read !== "function") {
-            //     console.error("OData model is not loaded or invalid:", this.oModel);
-            //     return;
-            // }
-            // console.log("OData model loaded successfully:", this.oModel);
-            // this._createMessagePopover();
+            this._reset();
+            var oModel = this.getView().getModel();
+            if (!oModel) {
+                this._showError(this.i18n().getText("error.modelNotFound"), "error.modelNotFound", "Error: Model data not found.");
+                return;
+            }
         },
 
         // === Excel Template Export ===
@@ -47,6 +43,7 @@ sap.ui.define([
             oSheet.build().finally(function () {
                 oSheet.destroy();
             });
+
         },
 
         // === File Type Fehlerbehandlung ===
@@ -159,6 +156,7 @@ sap.ui.define([
                         oEntry.dontCreate = false;
                         oEntry[this.TsFields.STATUS] = "P";
                         oEntry[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pending");
+                        console.log("Raw Entry:", oEntry);
                         aScheduleEntries.push(oEntry);
                     });
                 });
@@ -272,6 +270,7 @@ sap.ui.define([
             return Object.keys(mandatoryFields)
                 .filter(fieldKey => oExcelRow[mandatoryFields[fieldKey]] === undefined || oExcelRow[mandatoryFields[fieldKey]] === null || oExcelRow[mandatoryFields[fieldKey]] === "")
                 .map(fieldKey => mandatoryFields[fieldKey]);
+
         },
 
         // === Backend-Upload der Einträge ===
@@ -300,7 +299,7 @@ sap.ui.define([
                         oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.noProjectUUID");
                         continue;
                     }
-                       
+                    console.log(`ProjectUUID for ${sProjectId}:`, sProjectUUID);
                     // Payload bauen
                     const oPayload = this._buildSchedulePayload(oRow, sProjectUUID);
 
@@ -328,11 +327,14 @@ sap.ui.define([
                 }
 
                 oViewModel.setProperty("/scheduleData", aExcelData);
+                console.log(this.getViewModel().getProperty("/scheduleData"));
+                console.log("Updated schedule data:", aExcelData);
                 oViewModel.refresh(true);
             }
 
-            // MessageToast.show(this.i18n().getText("message.processingFinished"));
+            MessageToast.show(this.i18n().getText("message.processingFinished"));
         },
+
 
         // === ProjectUUID aus Backend holen ===
         _getProjectUUID: async function (oModel, sProjectId) {

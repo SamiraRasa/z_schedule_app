@@ -45,7 +45,7 @@
                 growing="true"
                 growingThreshold="20"
                 sticky="ColumnHeaders"
-                type="Responsive"
+                
             >
                 <headerToolbar>
                     <OverflowToolbar>

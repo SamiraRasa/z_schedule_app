@@ -54,7 +54,7 @@ sap.ui.define([
          */
         // getMandatoryScheduleFields: function () {
         //     return [
-        //         ScheduleFields.PROGECT_ID,
+        //         ScheduleFields.PROJECT_ID,
         //         ScheduleFields.WBS_ID,
 
 
@@ -156,7 +156,7 @@ sap.ui.define([
 
 
             return {
-                [ScheduleFields.PROGECT_ID]: i18n.getText("template.column.example." + ScheduleFields.PROGECT_ID),
+                [ScheduleFields.PROJECT_ID]: i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
                 [ScheduleFields.WBS_ID]: i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
                 [ScheduleFields.PLANNED_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_START_DATE),
                 [ScheduleFields.PLANNED_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_END_DATE),
