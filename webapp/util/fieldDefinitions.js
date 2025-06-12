@@ -52,14 +52,17 @@ sap.ui.define([
          * Gibt die Spaltenüberschriften für die schedule-Tabellen zurück.
          * @returns {Array} Array von Objekten mit key und propertyKey
          */
-        // getMandatoryScheduleFields: function () {
-        //     return [
-        //         ScheduleFields.PROJECT_ID,
-        //         ScheduleFields.WBS_ID,
-
-
-        //     ];
-        // },
+        
+        getMandatoryFields: function () {
+            return [
+                ScheduleFields.PROJECT_ID,
+                ScheduleFields.WBS_ID,
+                ScheduleFields.PLANNED_START_DATE,
+                ScheduleFields.PLANNED_END_DATE,
+                ScheduleFields.BASELINE_START_DATE,
+                ScheduleFields.BASELINE_END_DATE
+            ];
+        },
 
         getTemplateColumnConfig: function () {
             return [

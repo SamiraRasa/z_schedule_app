@@ -156,11 +156,13 @@ sap.ui.define([
                             return; // Skip leere Zeilen
                         }
 
+                        // Create entry object by index (not by header names)
                         const oEntry = {};
                         aFieldOrder.forEach((fieldKey, i) => {
                             oEntry[fieldKey] = row[i];
                         });
-
+                        
+                        // Format date fields
                         aDateFields.forEach((sDateKey) => {
                             const rawDate = oEntry[sDateKey];
                             oEntry[sDateKey] = typeof rawDate === "number"
@@ -234,13 +236,13 @@ sap.ui.define([
                     const aValidationErrors = [];
 
                     // Pflichtfeld-Validierung (optional aktivieren)
-                    // const aMissingFields = this._validateMandatoryFields(oExcelRow);
-                    // if (aMissingFields.length > 0) {
-                    //     oExcelRow[this.TsFields.STATUS] = "E";
-                    //     oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [aMissingFields.join(", ")]);
-                    //     oExcelRow.dontCreate = true;
-                    //     return;
-                    // }
+                    const aMissingFields = this._validateMandatoryFields(oExcelRow);
+                    if (aMissingFields.length > 0) {
+                        oExcelRow[this.TsFields.STATUS] = "E";
+                        oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [aMissingFields.join(", ")]);
+                        oExcelRow.dontCreate = true;
+                        return;
+                    }
 
                     // Datumsfelder validieren
                     const dateFields = [
@@ -274,18 +276,12 @@ sap.ui.define([
 
         // === (Optional) Pflichtfeld-Validierung ===
         _validateMandatoryFields: function (oExcelRow) {
-            const mandatoryFields = {
-                [this.TsFields.PROJECT_ID]: "ProjectId",
-                [this.TsFields.WBS_ID]: "WbsId",
-                [this.TsFields.PLANNED_START_DATE]: "PlannedStartDate",
-                [this.TsFields.PLANNED_END_DATE]: "PlannedEndDate",
-                [this.TsFields.BASELINE_START_DATE]: "BaselineStartDate",
-                [this.TsFields.BASELINE_END_DATE]: "BaselineEndDate"
-            };
-            return Object.keys(mandatoryFields)
-                .filter(fieldKey => oExcelRow[mandatoryFields[fieldKey]] === undefined || oExcelRow[mandatoryFields[fieldKey]] === null || oExcelRow[mandatoryFields[fieldKey]] === "")
-                .map(fieldKey => mandatoryFields[fieldKey]);
-
+            return FieldDefinitions.getMandatoryFields()
+                .filter(fieldKey =>
+                    oExcelRow[fieldKey] === undefined ||
+                    oExcelRow[fieldKey] === null ||
+                    oExcelRow[fieldKey] === ""
+                );
         },
 
         // === Backend-Upload der Einträge ===
@@ -329,11 +325,9 @@ sap.ui.define([
 
                     // Payload bauen
                     const oPayload = this._buildSchedulePayload(oRow, sProjectElementUUID);
-                    debugger;
                     await new Promise((resolve, reject) => {
                         oTimesheetApiModel.update(`/A_EnterpriseProjectElement(guid'${sProjectElementUUID}')`, oPayload, {
                             success: () => {
-                                debugger;
                                 oRow[this.TsFields.STATUS] = "S";
                                 oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updated");
                                 resolve();
