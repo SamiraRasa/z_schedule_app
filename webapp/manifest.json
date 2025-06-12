@@ -17,7 +17,7 @@
     },
     "dataSources": {
       "mainService": {
-        "uri": "/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002",
+        "uri": "sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002/",
         "type": "OData",
         "settings": {
           "annotations": [],
@@ -82,7 +82,7 @@
           "bundleName": "at.zeta.ppm.scheduleupload.i18n.i18n"
         }
       },
-      "": {
+      "enterpriseProjectAPI": {
         "dataSource": "mainService",
         "preload": true,
         "settings": {}
