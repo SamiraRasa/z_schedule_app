@@ -20,15 +20,7 @@ sap.ui.define([
         // === Initialisierung ===
         onInit() {
             this._reset();
-            // this.oMessageManager = sap.ui.getCore().getMessageManager();
-            // this.oMessageManager.registerObject(this.getView(), true);
-            // this.oModel = this.getView().getModel();
-            // if (!this.oModel || typeof this.oModel.read !== "function") {
-            //     console.error("OData model is not loaded or invalid:", this.oModel);
-            //     return;
-            // }
-            // console.log("OData model loaded successfully:", this.oModel);
-            // this._createMessagePopover();
+
         },
 
         // === Excel Template Export ===
@@ -156,13 +148,11 @@ sap.ui.define([
                             return; // Skip leere Zeilen
                         }
 
-                        // Create entry object by index (not by header names)
                         const oEntry = {};
                         aFieldOrder.forEach((fieldKey, i) => {
                             oEntry[fieldKey] = row[i];
                         });
-                        
-                        // Format date fields
+
                         aDateFields.forEach((sDateKey) => {
                             const rawDate = oEntry[sDateKey];
                             oEntry[sDateKey] = typeof rawDate === "number"
@@ -235,15 +225,6 @@ sap.ui.define([
                 aExcelData.forEach(oExcelRow => {
                     const aValidationErrors = [];
 
-                    // Pflichtfeld-Validierung (optional aktivieren)
-                    const aMissingFields = this._validateMandatoryFields(oExcelRow);
-                    if (aMissingFields.length > 0) {
-                        oExcelRow[this.TsFields.STATUS] = "E";
-                        oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [aMissingFields.join(", ")]);
-                        oExcelRow.dontCreate = true;
-                        return;
-                    }
-
                     // Datumsfelder validieren
                     const dateFields = [
                         this.TsFields.PLANNED_START_DATE,
@@ -253,6 +234,19 @@ sap.ui.define([
                     ];
                     if (!dateFields.every(field => this._isValidDate(oExcelRow[field]))) {
                         aValidationErrors.push(this.i18n().getText("status.entry.invalidDate"));
+                    }
+
+                    // NEU: Prüfen, ob Enddatum vor Startdatum liegt
+                    const plannedStart = oExcelRow[this.TsFields.PLANNED_START_DATE];
+                    const plannedEnd = oExcelRow[this.TsFields.PLANNED_END_DATE];
+                    if (this._isValidDate(plannedStart) && this._isValidDate(plannedEnd) && plannedEnd < plannedStart) {
+                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStart"));
+                    }
+
+                    const baselineStart = oExcelRow[this.TsFields.BASELINE_START_DATE];
+                    const baselineEnd = oExcelRow[this.TsFields.BASELINE_END_DATE];
+                    if (this._isValidDate(baselineStart) && this._isValidDate(baselineEnd) && baselineEnd < baselineStart) {
+                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStartBaseline"));
                     }
 
                     if (aValidationErrors.length > 0) {
@@ -276,17 +270,23 @@ sap.ui.define([
 
         // === (Optional) Pflichtfeld-Validierung ===
         _validateMandatoryFields: function (oExcelRow) {
-            return FieldDefinitions.getMandatoryFields()
-                .filter(fieldKey =>
-                    oExcelRow[fieldKey] === undefined ||
-                    oExcelRow[fieldKey] === null ||
-                    oExcelRow[fieldKey] === ""
-                );
+            const mandatoryFields = {
+                [this.TsFields.PROJECT_ID]: "ProjectId",
+                [this.TsFields.WBS_ID]: "WbsId",
+                [this.TsFields.PLANNED_START_DATE]: "PlannedStartDate",
+                [this.TsFields.PLANNED_END_DATE]: "PlannedEndDate",
+                [this.TsFields.BASELINE_START_DATE]: "BaselineStartDate",
+                [this.TsFields.BASELINE_END_DATE]: "BaselineEndDate"
+            };
+            return Object.keys(mandatoryFields)
+                .filter(fieldKey => oExcelRow[mandatoryFields[fieldKey]] === undefined || oExcelRow[mandatoryFields[fieldKey]] === null || oExcelRow[mandatoryFields[fieldKey]] === "")
+                .map(fieldKey => mandatoryFields[fieldKey]);
+
         },
 
         // === Backend-Upload der Einträge ===
         _createScheduleEntries: async function () {
-            const oTimesheetApiModel = this.getViewModel("enterpriseProjectAPI");
+            const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
             const oViewModel = this.getViewModel();
             const aExcelData = oViewModel.getProperty("/scheduleData") || [];
             var sProjectUUID;
@@ -306,7 +306,7 @@ sap.ui.define([
                 try {
                     // ProjectElement direkt über ProjectElement-Key lesen (nicht mehr über UUID!)
                     const aElements = await new Promise((resolve, reject) => {
-                        oTimesheetApiModel.read("/A_EnterpriseProjectElement", {
+                        oScheduleApiModel.read("/A_EnterpriseProjectElement", {
                             filters: [
                                 new Filter("ProjectElement", FilterOperator.EQ, sWbsId)
                             ],
@@ -325,15 +325,17 @@ sap.ui.define([
 
                     // Payload bauen
                     const oPayload = this._buildSchedulePayload(oRow, sProjectElementUUID);
+
                     await new Promise((resolve, reject) => {
-                        oTimesheetApiModel.update(`/A_EnterpriseProjectElement(guid'${sProjectElementUUID}')`, oPayload, {
+                        oScheduleApiModel.update(`/A_EnterpriseProjectElement(guid'${sProjectElementUUID}')`, oPayload, {
                             success: () => {
+
                                 oRow[this.TsFields.STATUS] = "S";
                                 oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updated");
                                 resolve();
                             },
                             error: oError => {
-                                debugger;
+                                debugger
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
@@ -351,7 +353,7 @@ sap.ui.define([
                     oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
                     console.error(`Fehler bei Eintrag ${i + 1}:`, oError);
                 }
-                
+
                 oViewModel.setProperty("/scheduleData", aExcelData);
                 console.log(this.getViewModel().getProperty("/scheduleData"));
                 console.log("Updated schedule data:", aExcelData);
@@ -364,10 +366,10 @@ sap.ui.define([
 
         // === ProjectUUID aus Backend holen ===
         _getProjectUUID: async function (oModel, sProjectId) {
-            const oTimesheetApiModel = this.getViewModel("enterpriseProjectAPI");
+            const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
             try {
                 const aResults = await new Promise((resolve, reject) => {
-                    oTimesheetApiModel.read("/A_EnterpriseProject", {
+                    oScheduleApiModel.read("/A_EnterpriseProject", {
                         filters: [new sap.ui.model.Filter("Project", sap.ui.model.FilterOperator.EQ, sProjectId)],
                         urlParameters: {
                             "$top": 1,
@@ -399,9 +401,9 @@ sap.ui.define([
         },
 
         __getProjectUUID: async function (oModel, sProjectId) {
-            const oTimesheetApiModel = this.getViewModel("enterpriseProjectAPI");
+            const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
             return new Promise((resolve, reject) => {
-                oTimesheetApiModel.read("/A_EnterpriseProject", {
+                oScheduleApiModel.read("/A_EnterpriseProject", {
                     urlParameters: {
                         "$top": 1,
                         "$filter": `Project eq '${sProjectId}'`,
