@@ -304,14 +304,15 @@ sap.ui.define([
                 if (oRow.dontCreate) continue;
 
 
-                const sProjectId = oRow[this.TsFields.PROJECT_ID]; // z. B. "10.30.00002.101"
+                const sProjectId = oRow[this.TsFields.PROJECT_ID];  // z. B. "10.30.00002"
+                const sWbsId = oRow[this.TsFields.WBS_ID];          // z. B. "10.30.00002.101"
 
                 try {
                     // ProjectElement direkt über ProjectElement-Key lesen (nicht mehr über UUID!)
                     const aElements = await new Promise((resolve, reject) => {
                         oTimesheetApiModel.read("/A_EnterpriseProjectElement", {
                             filters: [
-                                new Filter("ProjectElement", FilterOperator.EQ, sProjectId)
+                                new Filter("ProjectElement", FilterOperator.EQ, sWbsId)
                             ],
                             success: oData => resolve(oData.results || []),
                             error: oErr => reject(oErr)
@@ -320,7 +321,7 @@ sap.ui.define([
 
                     if (aElements.length === 0) {
                         oRow[this.TsFields.STATUS] = "E";
-                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pspNotFound", [sProjectId]);
+                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pspNotFound", [sWbsId]);
                         continue;
                     }
 
