@@ -11,7 +11,7 @@ sap.ui.define([
     "sap/m/MessageItem",
     "sap/ui/core/message/MessageManager",
     "xlsx"
-], (BaseController, FieldDefinitions, MessageBox, MessageToast, JSONModel, Spreadsheet, MessagePopover, MessageItem, MessageManager, XLSX) => {
+], (BaseController, FieldDefinitions, MessageBox, MessageToast, JSONModel, Filter, FilterOperator, Spreadsheet, MessagePopover, MessageItem, MessageManager, XLSX) => {
     "use strict";
 
     return BaseController.extend("at.zeta.ppm.scheduleupload.controller.Main", {
@@ -19,6 +19,7 @@ sap.ui.define([
 
         // === Initialisierung ===
         onInit() {
+             this._reset();
             // this.oMessageManager = sap.ui.getCore().getMessageManager();
             // this.oMessageManager.registerObject(this.getView(), true);
             // this.oModel = this.getView().getModel();
@@ -56,11 +57,11 @@ sap.ui.define([
             const sSupportedTypes = aFileTypes.map(t => "*." + t).join(", ");
 
             sap.m.MessageBox.error(
-                oResourceBundle.getText("msg.invalidFileType", [sWrongType]),
+                this.i18n().getText("msg.invalidFileType", [sWrongType]),
                 {
-                    title: oResourceBundle.getText("msg.invalidFileType.title"),
-                    details: oResourceBundle.getText("msg.invalidFileType.details", [sSupportedTypes]),
-                    styleClass: "sapUiResponsivePadding--header sapUiResponsivePadding--content sapUiResponsivePadding--footer"
+                    title: this.i18n().getText("msg.invalidFileType.title"),
+                    details: this.i18n().getText("msg.invalidFileType.details", [sSupportedTypes]),
+                    // styleClass: "sapUiResponsivePadding--header sapUiResponsivePadding--content sapUiResponsivePadding--footer"
                 }
             );
         },
@@ -71,7 +72,7 @@ sap.ui.define([
             this._reset();
             const oViewModel = this.getViewModel();
             if (!oViewModel) {
-                this._showError(this.getResourceBundle(), "error.modelNotFound", "Error: Model data not found.");
+                this._showError(this.i18n().getText(), "error.modelNotFound", "Error: Model data not found.");
                 return;
             }
 
