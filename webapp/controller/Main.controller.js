@@ -19,7 +19,7 @@ sap.ui.define([
 
         // === Initialisierung ===
         onInit() {
-             this._reset();
+            this._reset();
             // this.oMessageManager = sap.ui.getCore().getMessageManager();
             // this.oMessageManager.registerObject(this.getView(), true);
             // this.oModel = this.getView().getModel();
@@ -133,20 +133,31 @@ sap.ui.define([
                     FieldDefinitions.ScheduleFields.BASELINE_END_DATE,
                 ];
 
+                const aFieldOrder = [
+                    this.TsFields.PROJECT_ID,
+                    this.TsFields.WBS_ID,
+                    this.TsFields.PLANNED_START_DATE,
+                    this.TsFields.PLANNED_END_DATE,
+                    this.TsFields.BASELINE_START_DATE,
+                    this.TsFields.BASELINE_END_DATE,
+                    this.TsFields.MILESTONE,
+                    this.TsFields.DESCRIPTION
+                ];
+
                 const aScheduleEntries = [];
 
                 workbook.SheetNames.forEach(sheetName => {
                     const worksheet = workbook.Sheets[sheetName];
                     const aRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    const aHeaders = aRows[0] || [];
                     const aDataRows = aRows.slice(1);
                     aDataRows.forEach(row => {
+                        if (row?.every(cell => cell === null || cell === "" || cell === undefined)) {
+                            return; // Skip leere Zeilen
+                        }
+
                         const oEntry = {};
-                        row.forEach((cell, idx) => {
-                            const key = aHeaders[idx] || "";
-                            if (key) {
-                                oEntry[key] = cell;
-                            }
+                        aFieldOrder.forEach((fieldKey, i) => {
+                            oEntry[fieldKey] = row[i];
                         });
 
                         aDateFields.forEach((sDateKey) => {
@@ -221,13 +232,13 @@ sap.ui.define([
                     const aValidationErrors = [];
 
                     // Pflichtfeld-Validierung (optional aktivieren)
-                    const aMissingFields = this._validateMandatoryFields(oExcelRow);
-                    if (aMissingFields.length > 0) {
-                        oExcelRow[this.TsFields.STATUS] = "E";
-                        oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [aMissingFields.join(", ")]);
-                        oExcelRow.dontCreate = true;
-                        return;
-                    }
+                    // const aMissingFields = this._validateMandatoryFields(oExcelRow);
+                    // if (aMissingFields.length > 0) {
+                    //     oExcelRow[this.TsFields.STATUS] = "E";
+                    //     oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [aMissingFields.join(", ")]);
+                    //     oExcelRow.dontCreate = true;
+                    //     return;
+                    // }
 
                     // Datumsfelder validieren
                     const dateFields = [
@@ -276,10 +287,10 @@ sap.ui.define([
 
         // === Backend-Upload der Einträge ===
         _createScheduleEntries: async function () {
-            const oModel = this.getView().getModel();
+            const oTimesheetApiModel = this.getViewModel("enterpriseProjectAPI");
             const oViewModel = this.getViewModel();
             const aExcelData = oViewModel.getProperty("/scheduleData") || [];
-
+            var sProjectUUID;
             if (!aExcelData.length) {
                 MessageBox.warning(this.i18n().getText("status.noDataToUpload"));
                 return;
@@ -289,44 +300,60 @@ sap.ui.define([
                 const oRow = aExcelData[i];
                 if (oRow.dontCreate) continue;
 
+
+                const sProjectId = oRow[this.TsFields.PROJECT_ID]; // z. B. "10.30.00002.101"
+
                 try {
-                    // ProjectUUID holen
-                    const sProjectId = oRow[this.TsFields.PROJECT_ID];
-                    const oProjectResponse = await this._getProjectUUID(oModel, sProjectId);
-                    const sProjectUUID = oProjectResponse.ProjectUUID;
-
-                    if (!sProjectUUID) {
-                        oRow[this.TsFields.STATUS] = "E";
-                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.noProjectUUID");
-                        continue;
-                    }
-                       
-                    // Payload bauen
-                    const oPayload = this._buildSchedulePayload(oRow, sProjectUUID);
-
-                    // PATCH-Update
-                    const oUpdatedEntry = await new Promise((resolve, reject) => {
-                        oModel.update(`/A_EnterpriseProject(ProjectUUID='${sProjectUUID}'`, oPayload, {
-                            success: resolve,
-                            error: reject
+                    // ProjectElement direkt über ProjectElement-Key lesen (nicht mehr über UUID!)
+                    const aElements = await new Promise((resolve, reject) => {
+                        oTimesheetApiModel.read("/A_EnterpriseProjectElement", {
+                            filters: [
+                                new Filter("ProjectElement", FilterOperator.EQ, sProjectId)
+                            ],
+                            success: oData => resolve(oData.results || []),
+                            error: oErr => reject(oErr)
                         });
                     });
 
-                    if (oUpdatedEntry) {
-                        oRow[this.TsFields.STATUS] = "S";
-                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updated");
-                    } else {
+                    if (aElements.length === 0) {
                         oRow[this.TsFields.STATUS] = "E";
-                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updateFailed");
+                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pspNotFound", [sProjectId]);
+                        continue;
                     }
+
+                    const sProjectElementUUID = aElements[0].ProjectElementUUID;
+
+                    // Payload bauen
+                    const oPayload = this._buildSchedulePayload(oRow, sProjectElementUUID);
+                    debugger;
+                    await new Promise((resolve, reject) => {
+                        oTimesheetApiModel.update(`/A_EnterpriseProjectElement(guid'${sProjectElementUUID}')`, oPayload, {
+                            success: () => {
+                                debugger;
+                                oRow[this.TsFields.STATUS] = "S";
+                                oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updated");
+                                resolve();
+                            },
+                            error: oError => {
+                                debugger;
+                                let sErrorMsg;
+                                try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
+                                oRow[this.TsFields.STATUS] = "E";
+                                oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
+                                console.error(`Error at entry ${i + 1}:`, oError);
+                                reject(oError);
+                            }
+                        });
+                    });
+
                 } catch (oError) {
                     let sErrorMsg;
                     try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                     oRow[this.TsFields.STATUS] = "E";
                     oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                    console.error(`Error at entry ${i + 1}:`, oError);
+                    console.error(`Fehler bei Eintrag ${i + 1}:`, oError);
                 }
-
+                
                 oViewModel.setProperty("/scheduleData", aExcelData);
                 oViewModel.refresh(true);
             }
@@ -336,15 +363,53 @@ sap.ui.define([
 
         // === ProjectUUID aus Backend holen ===
         _getProjectUUID: async function (oModel, sProjectId) {
+            const oTimesheetApiModel = this.getViewModel("enterpriseProjectAPI");
+            try {
+                const aResults = await new Promise((resolve, reject) => {
+                    oTimesheetApiModel.read("/A_EnterpriseProject", {
+                        filters: [new sap.ui.model.Filter("Project", sap.ui.model.FilterOperator.EQ, sProjectId)],
+                        urlParameters: {
+                            "$top": 1,
+                            "$select": "ProjectUUID"
+                        },
+                        success: oData => {
+                            const aData = oData.results || [];
+                            resolve(aData);
+                        },
+                        error: oError => {
+                            debugger;
+                            console.error("[_getProjectUUID] Error during API call:", oError);
+                            console.log("sProjectId:", sProjectId);
+                            reject(this.i18n().getText("error.getProjectUUID.failed"));
+                        }
+                    });
+                });
+
+                // Ergebnis auswerten
+                if (aResults.length > 0) {
+                    return aResults[0].ProjectUUID;
+                } else {
+                    throw this.i18n().getText("error.getProjectUUID.notFound");
+                }
+
+            } catch (error) {
+                throw error; // weiterreichen zur Aufrufer-Fehlerbehandlung
+            }
+        },
+
+        __getProjectUUID: async function (oModel, sProjectId) {
+            const oTimesheetApiModel = this.getViewModel("enterpriseProjectAPI");
             return new Promise((resolve, reject) => {
-                oModel.read("/A_EnterpriseProject", {
+                oTimesheetApiModel.read("/A_EnterpriseProject", {
                     urlParameters: {
                         "$top": 1,
                         "$filter": `Project eq '${sProjectId}'`,
                         "$select": "ProjectUUID",
                         "$inlinecount": "allpages"
                     },
-                    success: oData => resolve(oData.results[0] || {}),
+                    success: oData => {
+                        resolve(oData.results[0] || {})
+                    },
                     error: oError => {
                         console.error("[_getProjectUUID] Error during API call:", oError);
                         reject(this.i18n().getText("error.getProjectUUID.failed"));
@@ -357,11 +422,11 @@ sap.ui.define([
         // === Payload für Backend-Update bauen ===
         _buildSchedulePayload: function (oExcelRow, sProjectUUID) {
             return {
-                ProjectUUID: sProjectUUID,
+                // ProjectUUID: sProjectUUID,
                 PlannedStartDate: this._formatDateToString(oExcelRow[this.TsFields.PLANNED_START_DATE]),
                 PlannedEndDate: this._formatDateToString(oExcelRow[this.TsFields.PLANNED_END_DATE]),
-                YY1_BaselineStartDate: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_START_DATE]),
-                YY1_BaselineEndDate: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_END_DATE])
+                YY1_PM_BaselineStart_PTD: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_START_DATE]),
+                YY1_PM_BaselineEnd_PTD: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_END_DATE])
             };
         },
 
