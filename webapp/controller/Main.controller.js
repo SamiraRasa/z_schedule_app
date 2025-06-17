@@ -49,11 +49,11 @@ sap.ui.define([
             const sWrongType = oEvent.getParameter("fileType");
             const sSupportedTypes = aFileTypes.map(t => "*." + t).join(", ");
 
-            sap.m.MessageBox.error(
-                this.i18n().getText("msg.invalidFileType", [sWrongType]),
+            MessageBox.error(
+                this.i18n().getText("message.invalidFileType", [sWrongType]),
                 {
-                    title: this.i18n().getText("msg.invalidFileType.title"),
-                    details: this.i18n().getText("msg.invalidFileType.details", [sSupportedTypes]),
+                    title: this.i18n().getText("message.invalidFileType.title"),
+                    details: this.i18n().getText("message.invalidFileType.details", [sSupportedTypes]),
 
                 }
             );
@@ -282,7 +282,7 @@ sap.ui.define([
                 }
 
                 // Validierung für PercentageOfCompletion (YY1_PM_PoC_PTD)
-                const percentageOfCompletion = oExcelRow[this.TsFields.POC];
+                const PercentageOfCompletion = oExcelRow[this.TsFields.POC];
                 const sPocValue = oExcelRow[this.TsFields.POC];
                 if (sPocValue !== undefined && sPocValue !== null && sPocValue !== "") {
                     const fPocValue = parseFloat(sPocValue);
@@ -487,7 +487,7 @@ sap.ui.define([
                 YY1_PM_PoC_PTD: (oExcelRow[this.TsFields.POC])
                 // Milestone: oExcelRow[this.TsFields.MILESTONE],
                 // MilestoneName: oExcelRow[this.TsFields.MILESTONE_NAME],
-              
+
 
             };
         },
@@ -495,7 +495,7 @@ sap.ui.define([
         _createMilestones: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
             const oViewModel = this.getViewModel();
-            
+
             try {
                 const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID]);
                 const sMilestonePrefix = oRow[this.TsFields.MILESTONE_NAME]?.substring(0, 5) || null;
@@ -507,19 +507,25 @@ sap.ui.define([
                     oScheduleApiModel.read("/A_EnterpriseProjectElement", {
                         filters: [
                             new Filter("ProjectUUID", FilterOperator.EQ, oUUIDs.ProjectUUID),
-                            new Filter("ProjectElementDescription", FilterOperator.StartsWith, sMilestonePrefix)
+                            new Filter("ProjectElementDescription", FilterOperator.StartsWith, sMilestonePrefix),
+
                         ],
                         success: oData => resolve(oData.results?.length > 0),
                         error: oErr => reject(oErr)
                     });
                 });
 
-                if (milestoneExists) {
-                    throw {
-                        status: 'I',
-                        statusMessage: this.i18n().getText("status.milestone.alreadyExists", [sMilestonePrefix])
+                // if (milestoneExists) {
+                //     throw {
+                //         status: 'I',
+                //         statusMessage: this.i18n().getText("status.milestone.alreadyExists", [sMilestonePrefix])
 
-                    };
+                //     };
+                // }
+                if (milestoneExists) {
+                    const error = new Error(this.i18n().getText("status.milestone.alreadyExists", [sMilestonePrefix]));
+                    error.status = 'I';
+                    throw error;
                 }
 
                 const oPayload = {
@@ -536,14 +542,14 @@ sap.ui.define([
                         {
                             success: () => {
                                 oRow[this.TsFields.STATUS] = "S";
-                                   (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + this.i18n().getText("status.milestone.created");
+                                (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + this.i18n().getText("status.milestone.created");
                                 resolve();
                             },
                             error: oErr => {
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
-                                 (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + (sErrorMsg || this.i18n().getText("status.milestone.failed"));
+                                (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + (sErrorMsg || this.i18n().getText("status.milestone.failed"));
                                 reject(oErr);
                             }
                         }
@@ -618,7 +624,7 @@ sap.ui.define([
                     oScheduleApiModel.read("/A_EnterpriseProjectElement", {
                         filters: [
                             new Filter("ProjectElement", FilterOperator.EQ, sWbsId),
-                            new Filter("WBSElementInternalID", FilterOperator.NE, "0")
+                            new Filter("WBSElementInternalID", FilterOperator.NE, 0)
                         ],
                         urlParameters: {
                             $select: "ProjectElementUUID,ProjectUUID"
