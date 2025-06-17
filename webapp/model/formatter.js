@@ -22,6 +22,8 @@ sap.ui.define([], function() {
             }
             return vDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
         },
+
+     
         
         /**
          * Format the status text for upload entries.

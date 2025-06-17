@@ -54,7 +54,7 @@ sap.ui.define([
                 {
                     title: this.i18n().getText("msg.invalidFileType.title"),
                     details: this.i18n().getText("msg.invalidFileType.details", [sSupportedTypes]),
-                    // styleClass: "sapUiResponsivePadding--header sapUiResponsivePadding--content sapUiResponsivePadding--footer"
+
                 }
             );
         },
@@ -127,13 +127,15 @@ sap.ui.define([
                 ];
 
                 const aFieldOrder = [
-                    this.TsFields.PROJECT_ID,
+
                     this.TsFields.WBS_ID,
                     this.TsFields.PLANNED_START_DATE,
                     this.TsFields.PLANNED_END_DATE,
                     this.TsFields.BASELINE_START_DATE,
                     this.TsFields.BASELINE_END_DATE,
+                    this.TsFields.POC,
                     this.TsFields.MILESTONE,
+                    this.TsFields.MILESTONE_NAME,
                     this.TsFields.DESCRIPTION
                 ];
 
@@ -148,10 +150,12 @@ sap.ui.define([
                             return; // Skip leere Zeilen
                         }
 
+
                         const oEntry = {};
                         aFieldOrder.forEach((fieldKey, i) => {
                             oEntry[fieldKey] = row[i];
                         });
+
 
                         aDateFields.forEach((sDateKey) => {
                             const rawDate = oEntry[sDateKey];
@@ -168,6 +172,7 @@ sap.ui.define([
                     });
                 });
 
+
                 // Write read data and metadata to the ViewModel
                 oViewModel.setProperty("/fileName", oFile.name);
                 oViewModel.setProperty("/filePath", oEvent.getParameter("newValue"));
@@ -176,15 +181,14 @@ sap.ui.define([
                 oViewModel.setProperty("/busy", false);
                 oViewModel.setProperty("/scheduleData", aScheduleEntries);
                 oViewModel.setProperty("/existingEntries", []);
-                // Set schedule data to ViewModel
 
+                // Set schedule data to ViewModel
                 if (aScheduleEntries.length === 0) {
                     throw this.i18n().getText("message.noDataRows");
                 }
 
-                // === Validierung und Backend-Upload ===
-                await this._validateEntries();
-                await this._createScheduleEntries();
+
+
 
             } catch (error) {
                 const sErrorMsg = error instanceof Error ? error.message : String(error);
@@ -198,18 +202,36 @@ sap.ui.define([
                 oFileUploader.setValueStateText("");
                 oFileUploader.setValue("");
             }
+
+            // === Validierung und Backend-Upload ===
+            await this._validateEntries();
+            // await this._createScheduleEntries();
+            try {
+                await this._processExcelData();
+
+            } catch (error) {
+
+                const sErrorMsg = error instanceof Error ? error.message : String(error);
+
+                MessageBox.error(sErrorMsg);
+                oViewModel.setProperty("/uploadStatus", "E");
+                oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadingFailed"));
+
+            }
+
         },
 
-        // === Payload Builder für Schedule-Upload ===
         buildSchedulePayload: function (oExcelRow) {
             return {
-                ProjectId: oExcelRow[this.TsFields.PROJECT_ID],
+
                 WbsID: oExcelRow[this.TsFields.WBS_ID],
                 PlannedStartDate: this._formatDateToString(oExcelRow[this.TsFields.PLANNED_START_DATE]),
                 PlannedEndDate: this._formatDateToString(oExcelRow[this.TsFields.PLANNED_END_DATE]),
                 BaselineStartDate: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_START_DATE]),
                 BaselineEndDate: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_END_DATE]),
+                PercentageOfCompletion: oExcelRow[this.TsFields.POC],
                 Milestone: oExcelRow[this.TsFields.MILESTONE],
+                MilestoneName: oExcelRow[this.TsFields.MILESTONE_NAME],
                 Status: oExcelRow[this.TsFields.STATUS],
                 StatusMessage: oExcelRow[this.TsFields.STATUS_MESSAGE],
                 Description: oExcelRow[this.TsFields.DESCRIPTION]
@@ -221,66 +243,92 @@ sap.ui.define([
             const oViewModel = this.getViewModel();
             const aExcelData = oViewModel.getProperty("/scheduleData") || [];
 
-            try {
-                aExcelData.forEach(oExcelRow => {
-                    const aValidationErrors = [];
 
-                    // Datumsfelder validieren
-                    const dateFields = [
-                        this.TsFields.PLANNED_START_DATE,
-                        this.TsFields.PLANNED_END_DATE,
-                        this.TsFields.BASELINE_START_DATE,
-                        this.TsFields.BASELINE_END_DATE
-                    ];
-                    if (!dateFields.every(field => this._isValidDate(oExcelRow[field]))) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.invalidDate"));
+            aExcelData.forEach(oExcelRow => {
+                const aValidationErrors = [];
+
+                // Pflichtfelder prüfen
+                const aMissingFields = this._validateMandatoryFields(oExcelRow, oExcelRow[this.TsFields.MILESTONE] === "P" || oExcelRow[this.TsFields.MILESTONE] === "M");
+                if (aMissingFields.length > 0) {
+                    const sFields = aMissingFields.join(", ");
+                    oExcelRow[this.TsFields.STATUS] = "E";
+                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [sFields]);
+                    oExcelRow.dontCreate = true;
+                    return;
+                }
+
+                // Datumsfelder validieren
+                const dateFields = [
+                    this.TsFields.PLANNED_START_DATE,
+                    this.TsFields.PLANNED_END_DATE,
+                    this.TsFields.BASELINE_START_DATE,
+                    this.TsFields.BASELINE_END_DATE
+                ];
+                if (!dateFields.every(field => this._isValidDate(oExcelRow[field]))) {
+                    aValidationErrors.push(this.i18n().getText("status.entry.invalidDate"));
+                }
+
+                // Prüfen, ob Enddatum vor Startdatum liegt
+                const plannedStart = oExcelRow[this.TsFields.PLANNED_START_DATE];
+                const plannedEnd = oExcelRow[this.TsFields.PLANNED_END_DATE];
+                if (this._isValidDate(plannedStart) && this._isValidDate(plannedEnd) && plannedEnd < plannedStart) {
+                    aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStart"));
+                }
+
+                const baselineStart = oExcelRow[this.TsFields.BASELINE_START_DATE];
+                const baselineEnd = oExcelRow[this.TsFields.BASELINE_END_DATE];
+                if (this._isValidDate(baselineStart) && this._isValidDate(baselineEnd) && baselineEnd < baselineStart) {
+                    aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStartBaseline"));
+                }
+
+                // Validierung für PercentageOfCompletion (YY1_PM_PoC_PTD)
+                const percentageOfCompletion = oExcelRow[this.TsFields.POC];
+                const sPocValue = oExcelRow[this.TsFields.POC];
+                if (sPocValue !== undefined && sPocValue !== null && sPocValue !== "") {
+                    const fPocValue = parseFloat(sPocValue);
+                    // Prüfe, ob es eine gültige Zahl ist
+                    if (isNaN(fPocValue)) {
+                        aValidationErrors.push(this.i18n().getText("status.entry.invalidPoC", [sPocValue]));
+                    } else {
+                        // Prüfe Bereich (0 bis 100)
+                        if (fPocValue < 0 || fPocValue > 100) {
+                            aValidationErrors.push(this.i18n().getText("status.entry.PoCOutOfRange", [sPocValue]));
+                        }
+                        // Prüfe Dezimalstellen (max. 3)
+                        const sDecimalPart = String(sPocValue).split(".")[1];
+                        if (sDecimalPart && sDecimalPart.length > 3) {
+                            aValidationErrors.push(this.i18n().getText("status.entry.PoCTooManyDecimals", [sPocValue]));
+                        }
                     }
+                }
+                if (aValidationErrors.length > 0) {
+                    oExcelRow.dontCreate = true;
+                    oExcelRow[this.TsFields.STATUS] = "E";
+                    oExcelRow[this.TsFields.STATUS_MESSAGE] = aValidationErrors.join("\n");
+                    return;
+                }
 
-                    // NEU: Prüfen, ob Enddatum vor Startdatum liegt
-                    const plannedStart = oExcelRow[this.TsFields.PLANNED_START_DATE];
-                    const plannedEnd = oExcelRow[this.TsFields.PLANNED_END_DATE];
-                    if (this._isValidDate(plannedStart) && this._isValidDate(plannedEnd) && plannedEnd < plannedStart) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStart"));
-                    }
+                oExcelRow[this.TsFields.STATUS] = "P";
+                oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pending");
 
-                    const baselineStart = oExcelRow[this.TsFields.BASELINE_START_DATE];
-                    const baselineEnd = oExcelRow[this.TsFields.BASELINE_END_DATE];
-                    if (this._isValidDate(baselineStart) && this._isValidDate(baselineEnd) && baselineEnd < baselineStart) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStartBaseline"));
-                    }
+                //TODO : milestone-Validierung
 
-                    if (aValidationErrors.length > 0) {
-                        oExcelRow.dontCreate = true;
-                        oExcelRow[this.TsFields.STATUS] = "E";
-                        oExcelRow[this.TsFields.STATUS_MESSAGE] = aValidationErrors.join("\n");
-                        return;
-                    }
+            });
 
-                    oExcelRow[this.TsFields.STATUS] = "P";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pending");
-                });
+            oViewModel.setProperty("/scheduleData", aExcelData);
+            oViewModel.refresh(true);
 
-                oViewModel.setProperty("/scheduleData", aExcelData);
-                oViewModel.refresh(true);
-            } catch (error) {
-                console.error("[validateEntries] Validation failed:", error);
-                throw error;
-            }
         },
 
         // === (Optional) Pflichtfeld-Validierung ===
-        _validateMandatoryFields: function (oExcelRow) {
-            const mandatoryFields = {
-                [this.TsFields.PROJECT_ID]: "ProjectId",
-                [this.TsFields.WBS_ID]: "WbsId",
-                [this.TsFields.PLANNED_START_DATE]: "PlannedStartDate",
-                [this.TsFields.PLANNED_END_DATE]: "PlannedEndDate",
-                [this.TsFields.BASELINE_START_DATE]: "BaselineStartDate",
-                [this.TsFields.BASELINE_END_DATE]: "BaselineEndDate"
-            };
-            return Object.keys(mandatoryFields)
-                .filter(fieldKey => oExcelRow[mandatoryFields[fieldKey]] === undefined || oExcelRow[mandatoryFields[fieldKey]] === null || oExcelRow[mandatoryFields[fieldKey]] === "")
-                .map(fieldKey => mandatoryFields[fieldKey]);
+        _validateMandatoryFields: function (oExcelRow, bIsMilestone) {
+
+            return FieldDefinitions.getMandatoryFields(bIsMilestone)
+                .filter(fieldKey =>
+                    oExcelRow[fieldKey] === undefined ||
+                    oExcelRow[fieldKey] === null ||
+                    oExcelRow[fieldKey] === ""
+                );
 
         },
 
@@ -300,7 +348,7 @@ sap.ui.define([
                 if (oRow.dontCreate) continue;
 
 
-                const sProjectId = oRow[this.TsFields.PROJECT_ID];  // z. B. "10.30.00002"
+                // const sProjectId = oRow[this.TsFields.PROJECT_ID];  // z. B. "10.30.00002"
                 const sWbsId = oRow[this.TsFields.WBS_ID];          // z. B. "10.30.00002.101"
 
                 try {
@@ -310,6 +358,10 @@ sap.ui.define([
                             filters: [
                                 new Filter("ProjectElement", FilterOperator.EQ, sWbsId)
                             ],
+                            urlParameters: {
+                                $select: "ProjectElementUUID,ProjectUUID"
+                            },
+
                             success: oData => resolve(oData.results || []),
                             error: oErr => reject(oErr)
                         });
@@ -322,20 +374,21 @@ sap.ui.define([
                     }
 
                     const sProjectElementUUID = aElements[0].ProjectElementUUID;
+                    // await this._checkMilestoneStatus(oRow);
 
                     // Payload bauen
-                    const oPayload = this._buildSchedulePayload(oRow, sProjectElementUUID);
+                    const oPayload = this._buildSchedulePayload(oRow);
 
                     await new Promise((resolve, reject) => {
                         oScheduleApiModel.update(`/A_EnterpriseProjectElement(guid'${sProjectElementUUID}')`, oPayload, {
                             success: () => {
-
                                 oRow[this.TsFields.STATUS] = "S";
                                 oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updated");
+
                                 resolve();
                             },
                             error: oError => {
-                                debugger
+
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
@@ -351,11 +404,12 @@ sap.ui.define([
                     try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                     oRow[this.TsFields.STATUS] = "E";
                     oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                    console.error(`Fehler bei Eintrag ${i + 1}:`, oError);
+                    // console.error(`Fehler bei Eintrag ${i + 1}:`, oError);
                 }
 
                 oViewModel.setProperty("/scheduleData", aExcelData);
                 console.log(this.getViewModel().getProperty("/scheduleData"));
+                // console.log(this._getMilestones(sProjectUUID));
                 console.log("Updated schedule data:", aExcelData);
                 oViewModel.refresh(true);
             }
@@ -370,7 +424,7 @@ sap.ui.define([
             try {
                 const aResults = await new Promise((resolve, reject) => {
                     oScheduleApiModel.read("/A_EnterpriseProject", {
-                        filters: [new sap.ui.model.Filter("Project", sap.ui.model.FilterOperator.EQ, sProjectId)],
+                        filters: [new sap.ui.model.Filter("Project", FilterOperator.EQ, sProjectId)],
                         urlParameters: {
                             "$top": 1,
                             "$select": "ProjectUUID"
@@ -380,7 +434,7 @@ sap.ui.define([
                             resolve(aData);
                         },
                         error: oError => {
-                            debugger;
+
                             console.error("[_getProjectUUID] Error during API call:", oError);
                             console.log("sProjectId:", sProjectId);
                             reject(this.i18n().getText("error.getProjectUUID.failed"));
@@ -423,17 +477,171 @@ sap.ui.define([
         },
 
         // === Payload für Backend-Update bauen ===
-        _buildSchedulePayload: function (oExcelRow, sProjectUUID) {
+        _buildSchedulePayload: function (oExcelRow) {
             return {
-                // ProjectUUID: sProjectUUID,
+
                 PlannedStartDate: this._formatDateToString(oExcelRow[this.TsFields.PLANNED_START_DATE]),
                 PlannedEndDate: this._formatDateToString(oExcelRow[this.TsFields.PLANNED_END_DATE]),
                 YY1_PM_BaselineStart_PTD: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_START_DATE]),
-                YY1_PM_BaselineEnd_PTD: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_END_DATE])
+                YY1_PM_BaselineEnd_PTD: this._formatDateToString(oExcelRow[this.TsFields.BASELINE_END_DATE]),
+                YY1_PM_PoC_PTD: (oExcelRow[this.TsFields.POC])
+                // Milestone: oExcelRow[this.TsFields.MILESTONE],
+                // MilestoneName: oExcelRow[this.TsFields.MILESTONE_NAME],
+              
+
             };
+        },
+        // === Milestones ===
+        _createMilestones: async function (oRow) {
+            const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
+            const oViewModel = this.getViewModel();
+            
+            try {
+                const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID]);
+                const sMilestonePrefix = oRow[this.TsFields.MILESTONE_NAME]?.substring(0, 5) || null;
+                if (!sMilestonePrefix) {
+                    throw new Error(this.i18n().getText("status.milestone.wrongPrefix"));
+                }
+
+                const milestoneExists = await new Promise((resolve, reject) => {
+                    oScheduleApiModel.read("/A_EnterpriseProjectElement", {
+                        filters: [
+                            new Filter("ProjectUUID", FilterOperator.EQ, oUUIDs.ProjectUUID),
+                            new Filter("ProjectElementDescription", FilterOperator.StartsWith, sMilestonePrefix)
+                        ],
+                        success: oData => resolve(oData.results?.length > 0),
+                        error: oErr => reject(oErr)
+                    });
+                });
+
+                if (milestoneExists) {
+                    throw {
+                        status: 'I',
+                        statusMessage: this.i18n().getText("status.milestone.alreadyExists", [sMilestonePrefix])
+
+                    };
+                }
+
+                const oPayload = {
+                    ProjectElementDescription: oRow[this.TsFields.MILESTONE_NAME],
+                    PlannedEndDate: this._formatDateToString(oRow[this.TsFields.PLANNED_END_DATE]),
+                    IsProjectMilestone: "X",
+                    IsMainMilestone: oRow[this.TsFields.MILESTONE] === "P"
+                };
+
+                await new Promise((resolve, reject) => {
+                    oScheduleApiModel.create(
+                        `/A_EnterpriseProjectElement(guid'${oUUIDs.ProjectElementUUID}')/to_SubProjElement`,
+                        oPayload,
+                        {
+                            success: () => {
+                                oRow[this.TsFields.STATUS] = "S";
+                                   (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + this.i18n().getText("status.milestone.created");
+                                resolve();
+                            },
+                            error: oErr => {
+                                let sErrorMsg;
+                                try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
+                                oRow[this.TsFields.STATUS] = "E";
+                                 (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + (sErrorMsg || this.i18n().getText("status.milestone.failed"));
+                                reject(oErr);
+                            }
+                        }
+                    );
+                });
+            } catch (error) {
+                oRow[this.TsFields.STATUS] = error.status || "E";
+                oRow[this.TsFields.STATUS_MESSAGE] = error.message || error.statusMessage || this.i18n().getText("status.milestone.failed");
+                oViewModel.refresh(true);
+
+            }
+        },
+        _updateProjectElement: async function (oRow) {
+            const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
+
+            try {
+                const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID]);
+                if (oUUIDs === null) {
+                    throw {
+                        status: 'E',
+                        statusMessage: this.i18n().getText("status.entry.wbsNotFound", [oRow[this.TsFields.WBS_ID]])
+                    };
+                }
+                const oPayload = this._buildSchedulePayload(oRow);
+
+                await new Promise((resolve, reject) => {
+                    oScheduleApiModel.update(`/A_EnterpriseProjectElement(guid'${oUUIDs.ProjectElementUUID}')`, oPayload, {
+                        success: () => {
+                            oRow[this.TsFields.STATUS] = "S";
+                            oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.updated");
+                            resolve();
+                        },
+                        error: oError => {
+                            debugger;
+                            let sErrorMsg;
+                            try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
+                            oRow[this.TsFields.STATUS] = "E";
+                            oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
+                            reject(oError);
+                        }
+                    });
+                });
+
+            } catch (error) {
+                oRow[this.TsFields.STATUS] = error.status || "E";
+                oRow[this.TsFields.STATUS_MESSAGE] = error.statusMessage || this.i18n().getText("status.entry.cantReadErrorTextResult");
+                this.getViewModel().refresh(true);
+            }
+        },
+        _processExcelData: async function () {
+            const oScheduleData = this.getViewModel().getProperty("/scheduleData");
+            if (!oScheduleData || oScheduleData.length === 0) {
+                throw new Error(this.i18n().getText("message.noDataRows"));
+            }
+            for (const oRow of oScheduleData) {
+                if (oRow.dontCreate) {
+                    continue;
+                }
+                if (oRow[this.TsFields.MILESTONE]) {
+                    await this._createMilestones(oRow);
+                } else {
+                    await this._updateProjectElement(oRow);
+                }
+            }
         },
 
         // === Hilfsfunktionen für Datumskonvertierung ===
+        _getProjectElementData: async function (sWbsId) {
+            const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
+            try {
+                const aElements = await new Promise((resolve, reject) => {
+                    oScheduleApiModel.read("/A_EnterpriseProjectElement", {
+                        filters: [
+                            new Filter("ProjectElement", FilterOperator.EQ, sWbsId),
+                            new Filter("WBSElementInternalID", FilterOperator.NE, "0")
+                        ],
+                        urlParameters: {
+                            $select: "ProjectElementUUID,ProjectUUID"
+                        },
+                        success: oData => resolve(oData.results || []),
+                        error: oErr => reject(oErr)
+                    });
+                });
+
+                if (aElements.length === 0) {
+                    return null;
+                    // throw new Error(this.i18n().getText("status.entry.pspNotFound", [sWbsId]));
+                }
+
+                return {
+                    ProjectElementUUID: aElements[0].ProjectElementUUID,
+                    ProjectUUID: aElements[0].ProjectUUID
+                };
+            } catch (error) {
+                throw error;
+            }
+        },
+
         _formatDateToString: function (oDate) {
             if (!(oDate instanceof Date) || isNaN(oDate)) {
                 return null;
@@ -510,6 +718,10 @@ sap.ui.define([
             });
             this.getView().addDependent(this._oMessagePopover);
         },
+
+
+
+
 
     });
 

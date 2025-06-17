@@ -73,9 +73,7 @@
                     </OverflowToolbar>
                 </headerToolbar>
                 <columns>
-                    <Column minScreenWidth="Tablet" demandPopin="false">
-                        <Text text="{i18n>table.header.ProjectId}" />
-                    </Column>
+                    
                     <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.WbsId}" />
                     </Column>
@@ -92,7 +90,13 @@
                         <Text text="{i18n>table.header.BaselineEndDate}" />
                     </Column>
                     <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
+                        <Text text="{i18n>table.header.PercentageOfCompletion}" />
+                    </Column>
+                    <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.Milestone}" />
+                    </Column>
+                     <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
+                        <Text text="{i18n>table.header.MilestoneName}" />
                     </Column>
                     <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
                         <Text text="{i18n>table.header.Status}" />
@@ -107,7 +111,7 @@
                 <items>
                     <ColumnListItem>
                         <cells>
-                            <ObjectIdentifier title="{projectId}" />
+                            
                             <Text text="{wbsId}" />
                             <Text
                                 text="{path: 'plannedStartDate', formatter: '.formatter.formatDate'}" />
@@ -117,7 +121,9 @@
                                 text="{path: 'baselineStartDate', formatter: '.formatter.formatDate'}" />
                             <Text
                                 text="{path: 'baselineEndDate', formatter: '.formatter.formatDate'}" />
+                            <Text text="{percentageOfCompletion}" />    
                             <Text text="{milestone}" />
+                            <Text text="{milestoneName}" />
                             <ObjectStatus
                                 text="{path: 'status', formatter: '.formatter.formatStatusText'}"
                                 icon="{path: 'status', formatter: '.formatter.formatStatusIcon'}"

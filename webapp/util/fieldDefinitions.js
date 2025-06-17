@@ -19,13 +19,15 @@ sap.ui.define([
 
      */
     const ScheduleFields = Object.freeze({
-        PROJECT_ID: "projectId",
+        
         WBS_ID: "wbsId",
         PLANNED_START_DATE: "plannedStartDate",
         PLANNED_END_DATE: "plannedEndDate",
         BASELINE_START_DATE: "baselineStartDate",
         BASELINE_END_DATE: "baselineEndDate",
+        POC: "percentageOfCompletion",
         MILESTONE: "milestone",
+        MILESTONE_NAME: "milestoneName",
         STATUS: "status",
         STATUS_MESSAGE: "statusMessage",
         DESCRIPTION: "description",
@@ -52,32 +54,36 @@ sap.ui.define([
          * Gibt die Spaltenüberschriften für die schedule-Tabellen zurück.
          * @returns {Array} Array von Objekten mit key und propertyKey
          */
-        
-        getMandatoryFields: function () {
-            return [
-                ScheduleFields.PROJECT_ID,
-                ScheduleFields.WBS_ID,
-                ScheduleFields.PLANNED_START_DATE,
-                ScheduleFields.PLANNED_END_DATE,
-                ScheduleFields.BASELINE_START_DATE,
-                ScheduleFields.BASELINE_END_DATE
-            ];
+
+        getMandatoryFields: function (bIsMilestone) {
+            if (bIsMilestone) {
+
+                return [
+
+                    ScheduleFields.WBS_ID,
+                    ScheduleFields.MILESTONE,
+                    ScheduleFields.MILESTONE_NAME,
+                    ScheduleFields.PLANNED_END_DATE,
+
+                ];
+            } else {
+                return [
+                   
+                    ScheduleFields.WBS_ID,
+                    ScheduleFields.PLANNED_START_DATE,
+                    ScheduleFields.PLANNED_END_DATE,
+                    ScheduleFields.BASELINE_START_DATE,
+                    ScheduleFields.BASELINE_END_DATE
+                ];
+            }
         },
 
         getTemplateColumnConfig: function () {
             return [
 
+              
                 {
-                    property: "projectId",
-                    type: EdmType.String,
-                    template: {
-                        content: "{projectId}"
-                    },
-                    width: 20
-                },
-
-                {
-                    property: "wbsId",
+                    property: "wbsId", // TODO: Change the enum
                     type: EdmType.String,
                     template: {
                         content: "{wbsId}"
@@ -132,12 +138,37 @@ sap.ui.define([
 
                 },
                 {
+                    property: ScheduleFields.POC,
+                    type: EdmType.Number,
+                    inputFormat: "0.00",
+                    scale: 2,
+                    template: {
+                        content: "{percentageOfCompletion}"
+                    },
+                    width: 5
+                },
+                {
                     property: "milestone",
                     type: EdmType.String,
                     template: {
                         content: "{milestone}"
                     },
                     width: 10
+
+                },
+                {
+
+                    property: "milestoneName",
+
+                    type: EdmType.String,
+
+                    template: {
+
+                        content: "{milestoneName}"
+
+                    },
+
+                    width: 40
 
                 },
 
@@ -149,8 +180,7 @@ sap.ui.define([
                     },
                     width: 40
 
-                },
-
+                }
 
             ];
         },
@@ -159,13 +189,15 @@ sap.ui.define([
 
 
             return {
-                [ScheduleFields.PROJECT_ID]: i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
+               
                 [ScheduleFields.WBS_ID]: i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
                 [ScheduleFields.PLANNED_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_START_DATE),
                 [ScheduleFields.PLANNED_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_END_DATE),
                 [ScheduleFields.BASELINE_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.BASELINE_START_DATE),
                 [ScheduleFields.BASELINE_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.BASELINE_END_DATE),
+                [ScheduleFields.POC]: i18n.getText("template.column.example." + ScheduleFields.POC),
                 [ScheduleFields.MILESTONE]: i18n.getText("template.column.example." + ScheduleFields.MILESTONE),
+                [ScheduleFields.MILESTONE_NAME]: i18n.getText("template.column.example." + ScheduleFields.MILESTONE_NAME),
                 [ScheduleFields.DESCRIPTION]: i18n.getText("template.column.example." + ScheduleFields.DESCRIPTION),
 
             };
