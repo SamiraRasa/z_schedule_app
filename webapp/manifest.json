@@ -3,7 +3,14 @@
   "sap.app": {
     "id": "at.zeta.ppm.scheduleupload",
     "type": "application",
-    "i18n": "i18n/i18n.properties",
+    "i18n": {
+      "bundleUrl": "i18n/i18n.properties",
+      "supportedLocales": [
+        "",
+        "de"
+      ],
+      "fallbackLocale": ""
+    },
     "applicationVersion": {
       "version": "0.0.1"
     },
@@ -44,8 +51,6 @@
       "thirdparty/customcontrol/spreadsheetimporter/v1_7_3"
     ]
   },
-   
- 
   "sap.ui": {
     "technology": "UI5",
     "icons": {
@@ -63,7 +68,7 @@
     }
   },
   "sap.ui5": {
-    "flexEnabled": true,
+    "flexEnabled": false,
     "dependencies": {
       "minUI5Version": "1.130.10",
       "libs": {
@@ -79,7 +84,13 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "at.zeta.ppm.scheduleupload.i18n.i18n"
+          "bundleName": "at.zeta.ppm.scheduleupload.i18n.i18n",
+          "supportedLocales": [
+            "",
+            "de"
+          ],
+          "bundleUrl": "i18n/i18n.properties",
+          "fallbackLocale": ""
         }
       },
       "enterpriseProjectAPI": {
@@ -107,8 +118,7 @@
         "type": "View",
         "viewType": "XML",
         "path": "at.zeta.ppm.scheduleupload.view",
-        "async": true,
-        "viewPath": "at.zeta.ppm.scheduleupload.view"
+        "async": true
       },
       "routes": [
         {
@@ -132,5 +142,9 @@
       "id": "App",
       "async": true
     }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "atzetappmscheduleupload"
   }
 }
