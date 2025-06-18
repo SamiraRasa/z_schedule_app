@@ -217,7 +217,10 @@ sap.ui.define([
                 oViewModel.setProperty("/uploadStatus", "E");
                 oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadingFailed"));
 
+            }finally {
+                 oViewModel.refresh(true);
             }
+            
 
         },
 
@@ -558,7 +561,7 @@ sap.ui.define([
             } catch (error) {
                 oRow[this.TsFields.STATUS] = error.status || "E";
                 oRow[this.TsFields.STATUS_MESSAGE] = error.message || error.statusMessage || this.i18n().getText("status.milestone.failed");
-                oViewModel.refresh(true);
+               
 
             }
         },
