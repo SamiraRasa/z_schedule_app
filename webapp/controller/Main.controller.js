@@ -545,14 +545,14 @@ sap.ui.define([
                         {
                             success: () => {
                                 oRow[this.TsFields.STATUS] = "S";
-                                (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + this.i18n().getText("status.milestone.created");
+                                oRow[this.TsFields.STATUS_MESSAGE]  = this.i18n().getText("status.milestone.created");
                                 resolve();
                             },
                             error: oErr => {
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
-                                (oRow[this.TsFields.STATUS_MESSAGE] || "") + "\n" + (sErrorMsg || this.i18n().getText("status.milestone.failed"));
+                                oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.milestone.failed");
                                 reject(oErr);
                             }
                         }
