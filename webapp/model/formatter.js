@@ -68,7 +68,7 @@ sap.ui.define([], function() {
         formatStatusIcon: function(sStatus) {
             switch (sStatus) {
                 case "P": return "sap-icon://pending";
-                case "S": return "sap-icon://status-positive";
+                case "S": return "sap-icon://status-completed";
                 case "E": return "sap-icon://status-error";
                 case "C": return "sap-icon://status-critical";
                 case "W": return "sap-icon://warning";

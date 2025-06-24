@@ -19,7 +19,7 @@ sap.ui.define([
 
      */
     const ScheduleFields = Object.freeze({
-        
+        PROJECT_ID: "projectId",
         WBS_ID: "wbsId",
         PLANNED_START_DATE: "plannedStartDate",
         PLANNED_END_DATE: "plannedEndDate",
@@ -60,7 +60,7 @@ sap.ui.define([
 
                 return [
 
-                    ScheduleFields.WBS_ID,
+                    ScheduleFields.PROJECT_ID,
                     ScheduleFields.MILESTONE,
                     ScheduleFields.MILESTONE_NAME,
                     ScheduleFields.PLANNED_END_DATE,
@@ -68,118 +68,91 @@ sap.ui.define([
                 ];
             } else {
                 return [
-                   
+
                     ScheduleFields.WBS_ID,
                     ScheduleFields.PLANNED_START_DATE,
                     ScheduleFields.PLANNED_END_DATE,
-                    ScheduleFields.BASELINE_START_DATE,
-                    ScheduleFields.BASELINE_END_DATE
+                    
                 ];
             }
         },
 
-        getTemplateColumnConfig: function () {
+        getTemplateColumnConfig: function (i18n) {
             return [
-
-              
                 {
-                    property: "wbsId", // TODO: Change the enum
+                    label: i18n.getText("table.header." + ScheduleFields.PROJECT_ID),
+                    property: ScheduleFields.PROJECT_ID,
                     type: EdmType.String,
-                    template: {
-                        content: "{wbsId}"
-                    },
+                    width: 20
+                },
+
+
+                {
+                    label: i18n.getText("table.header." + ScheduleFields.WBS_ID),
+                    property: ScheduleFields.WBS_ID,
+                    type: EdmType.String,
                     width: 25
                 },
 
                 {
-                    property: "plannedStartDate",
+                    label: i18n.getText("table.header." + ScheduleFields.PLANNED_START_DATE),
+                    property: ScheduleFields.PLANNED_START_DATE,
                     type: EdmType.Date,
                     inputFormat: "dd.MM.yyyy",
-                    template: {
-                        content: "{plannedStartDate}",
-                        format: "dd.MM.yyyy"
-
-                    },
                     width: 15
                 },
 
                 {
-                    property: "plannedEndDate",
+                    label: i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE),
+                    property: ScheduleFields.PLANNED_END_DATE,
                     type: EdmType.Date,
                     inputFormat: "dd.MM.yyyy",
-                    template: {
-                        content: "{plannedEndDate}",
-                        format: "dd.MM.yyyy"
-                    },
                     width: 15
                 },
 
                 {
-                    property: "baselineStartDate",
+                    label: i18n.getText("table.header." + ScheduleFields.BASELINE_START_DATE),
+                    property: ScheduleFields.BASELINE_START_DATE,
                     type: EdmType.Date,
                     inputFormat: "dd.MM.yyyy",
-                    template: {
-                        content: "{baselineStartDate}",
-                        format: "dd.MM.yyyy"
-                    },
                     width: 15
                 },
 
                 {
-                    property: "baselineEndDate",
+                    label: i18n.getText("table.header." + ScheduleFields.BASELINE_END_DATE),
+                    property: ScheduleFields.BASELINE_END_DATE,
                     type: EdmType.Date,
                     inputFormat: "dd.MM.yyyy",
-                    template: {
-                        content: "{baselineEndDate}",
-                        format: "dd.MM.yyyy"
-
-                    },
                     width: 15
 
                 },
                 {
+                    label: i18n.getText("table.header." + ScheduleFields.POC),
                     property: ScheduleFields.POC,
                     type: EdmType.Number,
                     inputFormat: "0.00",
                     scale: 2,
-                    template: {
-                        content: "{percentageOfCompletion}"
-                    },
                     width: 5
                 },
                 {
-                    property: "milestone",
+                    label: i18n.getText("table.header." + ScheduleFields.MILESTONE),
+                    property: ScheduleFields.MILESTONE,
                     type: EdmType.String,
-                    template: {
-                        content: "{milestone}"
-                    },
                     width: 10
-
                 },
                 {
 
-                    property: "milestoneName",
-
+                    label: i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME),
+                    property: ScheduleFields.MILESTONE_NAME,
                     type: EdmType.String,
-
-                    template: {
-
-                        content: "{milestoneName}"
-
-                    },
-
                     width: 40
-
                 },
 
                 {
-                    property: "description",
+                    label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION),
+                    property: ScheduleFields.DESCRIPTION,
                     type: EdmType.String,
-                    template: {
-                        content: "{description}"
-                    },
                     width: 40
-
                 }
 
             ];
@@ -189,7 +162,7 @@ sap.ui.define([
 
 
             return {
-               
+                [ScheduleFields.PROJECT_ID]: i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
                 [ScheduleFields.WBS_ID]: i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
                 [ScheduleFields.PLANNED_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_START_DATE),
                 [ScheduleFields.PLANNED_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_END_DATE),
