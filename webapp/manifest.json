@@ -35,11 +35,11 @@
     },
     "crossNavigation": {
       "inbounds": {
-        "ScheduleSemObj-ScheduleAction": {
+        "SemanticObject-ActionField": {
           "semanticObject": "ScheduleSemObj",
           "action": "ScheduleAction",
-          "title": "{{ScheduleSemObj-ScheduleAction.flpTitle}}",
-          "subTitle": "{{ScheduleSemObj-ScheduleAction.flpSubtitle}}",
+          "title": "{{SemanticObject-ActionField.flpTitle}}",
+          "subTitle": "{{SemanticObject-ActionField.flpSubtitle}}",
           "signature": {
             "parameters": {},
             "additionalParameters": "allowed"
