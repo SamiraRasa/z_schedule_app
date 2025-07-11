@@ -1,7 +1,7 @@
-sap.ui.define([], function() {
+sap.ui.define([], function () {
     "use strict";
     return {
-        
+
         /**
          * Format Date object to a string in the format d.M.yyyy.
          * @param {Date} vDate - Date object to format
@@ -11,10 +11,10 @@ sap.ui.define([], function() {
             if (!vDate) {
                 return "";
             }
-            
+
             const oDate = typeof vDate === "string" ? new Date(vDate) : vDate;
-            
-            if(oDate instanceof Date === false) {
+
+            if (oDate instanceof Date === false) {
                 return vDate;
             }
             if (isNaN(oDate.getTime())) {
@@ -23,15 +23,30 @@ sap.ui.define([], function() {
             return vDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
         },
 
-     
-        
+        // formatPocNumber: function (value) {
+        //     if (value === null || value === undefined || isNaN(parseFloat(value))) {
+        //         return "";
+        //     }
+        //     return parseFloat(value).toFixed(3); 
+        // },
+
+        // formatDate: function (vDate) {
+        //     if (!vDate) return "";
+        //     const oDate = typeof vDate === "string" ? new Date(vDate) : vDate;
+        //     if (!(oDate instanceof Date) || isNaN(oDate.getTime())) return vDate;
+        //     return oDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+        // },
+
+
         /**
          * Format the status text for upload entries.
          * @param {string} sStatus - The status in CHAR1 like "P", "S" etc.
          * @returns {string} - The formatted status text
          */
-        formatStatusText: function(sStatus) {
-            var oBundle = this.getView().getModel("i18n").getResourceBundle();
+
+        formatStatusText: function (sStatus) {
+            var oBundle = this.getView() && this.getView().getModel("i18n") ? this.getView().getModel("i18n").getResourceBundle() : null;
+            if (!oBundle) return sStatus;
             switch (sStatus) {
                 case "P": return oBundle.getText("status.sap.information");
                 case "S": return oBundle.getText("status.sap.success");
@@ -39,16 +54,16 @@ sap.ui.define([], function() {
                 case "C": return oBundle.getText("status.sap.critical");
                 case "W": return oBundle.getText("status.sap.warning");
                 case "I": return oBundle.getText("status.sap.information");
-                default:  return oBundle.getText("status.sap.unknown");
+                default: return oBundle.getText("status.sap.unknown");
             }
         },
-        
+
         /**
          * This function maps the CHAR1 status codes to UI5 state colors.
          * @param {string} sStatus - The status in CHAR1 like "P", "S" etc.
          * @returns {string} - The UI5 state color for the status like "None", "Success" etc.
          */
-        formatStatusState: function(sStatus) {
+        formatStatusState: function (sStatus) {
             switch (sStatus) {
                 case "P": return "None";
                 case "S": return "Success";
@@ -56,16 +71,16 @@ sap.ui.define([], function() {
                 case "C": return "Error";
                 case "W": return "Warning";
                 case "I": return "Information";
-                default:  return "None";
+                default: return "None";
             }
         },
-        
+
         /**
          * Format the status to an icon path for timesheet entries.
          * @param {string} sStatus - The status in CHAR1 like "P", "S" etc.
          * @returns {string} - The icon path for the status
          */
-        formatStatusIcon: function(sStatus) {
+        formatStatusIcon: function (sStatus) {
             switch (sStatus) {
                 case "P": return "sap-icon://pending";
                 case "S": return "sap-icon://status-completed";
@@ -73,9 +88,9 @@ sap.ui.define([], function() {
                 case "C": return "sap-icon://status-critical";
                 case "W": return "sap-icon://warning";
                 case "I": return "sap-icon://information";
-                default:  return "sap-icon://question-mark";
+                default: return "sap-icon://question-mark";
             }
-        }        
-        
+        }
+
     };
 });

@@ -25,13 +25,12 @@ sap.ui.define([
         PLANNED_END_DATE: "plannedEndDate",
         BASELINE_START_DATE: "baselineStartDate",
         BASELINE_END_DATE: "baselineEndDate",
-        POC: "percentageOfCompletion",
+        POC: "poc",
         MILESTONE: "milestone",
         MILESTONE_NAME: "milestoneName",
         STATUS: "status",
         STATUS_MESSAGE: "statusMessage",
         DESCRIPTION: "description",
-
 
 
     });
@@ -55,133 +54,66 @@ sap.ui.define([
          * @returns {Array} Array von Objekten mit key und propertyKey
          */
 
-        getMandatoryFields: function (bIsMilestone) {
-            if (bIsMilestone) {
-
-                return [
-
-                    ScheduleFields.PROJECT_ID,
-                    ScheduleFields.MILESTONE,
-                    ScheduleFields.MILESTONE_NAME,
-                    ScheduleFields.PLANNED_END_DATE,
-
-                ];
+        
+        getMandatoryFields: function (bIsMilestone, isPoC) {
+            if (isPoC) {
+                return [ScheduleFields.PROJECT_ID, ScheduleFields.WBS_ID, ScheduleFields.POC];
+            } else if (bIsMilestone) {
+                return [ScheduleFields.PROJECT_ID, ScheduleFields.MILESTONE, ScheduleFields.MILESTONE_NAME, ScheduleFields.PLANNED_END_DATE];
             } else {
-                return [
-
-                    ScheduleFields.WBS_ID,
-                    ScheduleFields.PLANNED_START_DATE,
-                    ScheduleFields.PLANNED_END_DATE,
-                    
-                ];
+                return [ScheduleFields.PROJECT_ID, ScheduleFields.WBS_ID, ScheduleFields.PLANNED_START_DATE, ScheduleFields.PLANNED_END_DATE];
             }
         },
 
-        getTemplateColumnConfig: function (i18n) {
+        getScheduleTemplateColumnConfig: function (i18n) {
+            const mandatoryFields = this.getMandatoryFields(false);
             return [
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.PROJECT_ID),
-                    property: ScheduleFields.PROJECT_ID,
-                    type: EdmType.String,
-                    width: 20
-                },
-
-
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.WBS_ID),
-                    property: ScheduleFields.WBS_ID,
-                    type: EdmType.String,
-                    width: 25
-                },
-
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.PLANNED_START_DATE),
-                    property: ScheduleFields.PLANNED_START_DATE,
-                    type: EdmType.Date,
-                    inputFormat: "dd.MM.yyyy",
-                    width: 15
-                },
-
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE),
-                    property: ScheduleFields.PLANNED_END_DATE,
-                    type: EdmType.Date,
-                    inputFormat: "dd.MM.yyyy",
-                    width: 15
-                },
-
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.BASELINE_START_DATE),
-                    property: ScheduleFields.BASELINE_START_DATE,
-                    type: EdmType.Date,
-                    inputFormat: "dd.MM.yyyy",
-                    width: 15
-                },
-
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.BASELINE_END_DATE),
-                    property: ScheduleFields.BASELINE_END_DATE,
-                    type: EdmType.Date,
-                    inputFormat: "dd.MM.yyyy",
-                    width: 15
-
-                },
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.POC),
-                    property: ScheduleFields.POC,
-                    type: EdmType.Number,
-                    inputFormat: "0.00",
-                    scale: 2,
-                    width: 5
-                },
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.MILESTONE),
-                    property: ScheduleFields.MILESTONE,
-                    type: EdmType.String,
-                    width: 10
-                },
-                {
-
-                    label: i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME),
-                    property: ScheduleFields.MILESTONE_NAME,
-                    type: EdmType.String,
-                    width: 40
-                },
-
-                {
-                    label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION),
-                    property: ScheduleFields.DESCRIPTION,
-                    type: EdmType.String,
-                    width: 40
-                }
-
+                { label: mandatoryFields.includes(ScheduleFields.PROJECT_ID) ? i18n.getText("table.header." + ScheduleFields.PROJECT_ID) + " *" : i18n.getText("table.header." + ScheduleFields.PROJECT_ID), key: ScheduleFields.PROJECT_ID, width: 15 },
+                { label: mandatoryFields.includes(ScheduleFields.WBS_ID) ? i18n.getText("table.header." + ScheduleFields.WBS_ID) + " *" : i18n.getText("table.header." + ScheduleFields.WBS_ID), key: ScheduleFields.WBS_ID, width: 18 },
+                { label: mandatoryFields.includes(ScheduleFields.PLANNED_START_DATE) ? i18n.getText("table.header." + ScheduleFields.PLANNED_START_DATE) + " *" : i18n.getText("table.header." + ScheduleFields.PLANNED_START_DATE), key: ScheduleFields.PLANNED_START_DATE, width: 18 },
+                { label: mandatoryFields.includes(ScheduleFields.PLANNED_END_DATE) ? i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE) + " *" : i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE), key: ScheduleFields.PLANNED_END_DATE, width: 18 },
+                { label: i18n.getText("table.header." + ScheduleFields.BASELINE_START_DATE), key: ScheduleFields.BASELINE_START_DATE, width: 18 },
+                { label: i18n.getText("table.header." + ScheduleFields.BASELINE_END_DATE), key: ScheduleFields.BASELINE_END_DATE, width: 18 },
+                { label: i18n.getText("table.header." + ScheduleFields.MILESTONE), key: ScheduleFields.MILESTONE, width: 15 },
+                { label: i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME), key: ScheduleFields.MILESTONE_NAME, width: 20 },
+                { label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION), key: ScheduleFields.DESCRIPTION, width: 25 }
             ];
         },
 
-        getTemplateExampleRow: function (i18n) {
+        getPocTemplateColumnConfig: function (i18n) {
+            const mandatoryFields = this.getMandatoryFields(false, true);
+            return [
+                { label: mandatoryFields.includes(ScheduleFields.PROJECT_ID) ? i18n.getText("table.header." + ScheduleFields.PROJECT_ID) + " *" : i18n.getText("table.header." + ScheduleFields.PROJECT_ID), key: ScheduleFields.PROJECT_ID, width: 15 },
+                { label: mandatoryFields.includes(ScheduleFields.WBS_ID) ? i18n.getText("table.header." + ScheduleFields.WBS_ID) + " *" : i18n.getText("table.header." + ScheduleFields.WBS_ID), key: ScheduleFields.WBS_ID, width: 18 },
+                { label: mandatoryFields.includes(ScheduleFields.POC) ? i18n.getText("table.header." + ScheduleFields.POC) + " *" : i18n.getText("table.header." + ScheduleFields.POC), key: ScheduleFields.POC, width: 15 }
+            ];
+        },
 
 
-            return {
-                [ScheduleFields.PROJECT_ID]: i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
-                [ScheduleFields.WBS_ID]: i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
-                [ScheduleFields.PLANNED_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_START_DATE),
-                [ScheduleFields.PLANNED_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.PLANNED_END_DATE),
-                [ScheduleFields.BASELINE_START_DATE]: i18n.getText("template.column.example." + ScheduleFields.BASELINE_START_DATE),
-                [ScheduleFields.BASELINE_END_DATE]: i18n.getText("template.column.example." + ScheduleFields.BASELINE_END_DATE),
-                [ScheduleFields.POC]: i18n.getText("template.column.example." + ScheduleFields.POC),
-                [ScheduleFields.MILESTONE]: i18n.getText("template.column.example." + ScheduleFields.MILESTONE),
-                [ScheduleFields.MILESTONE_NAME]: i18n.getText("template.column.example." + ScheduleFields.MILESTONE_NAME),
-                [ScheduleFields.DESCRIPTION]: i18n.getText("template.column.example." + ScheduleFields.DESCRIPTION),
+        getScheduleTemplateExampleRow: function (i18n) {
+            // getTemplateExampleRow: function (i18n) {
+            return [
+                i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
+                i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
+                i18n.getText("template.column.example." + ScheduleFields.PLANNED_START_DATE),
+                i18n.getText("template.column.example." + ScheduleFields.PLANNED_END_DATE),
+                i18n.getText("template.column.example." + ScheduleFields.BASELINE_START_DATE),
+                i18n.getText("template.column.example." + ScheduleFields.BASELINE_END_DATE),
+                i18n.getText("template.column.example." + ScheduleFields.MILESTONE),
+                i18n.getText("template.column.example." + ScheduleFields.MILESTONE_NAME),
+                i18n.getText("template.column.example." + ScheduleFields.DESCRIPTION)
+            ];
+        },
+        getPocTemplateExampleRow: function (i18n) {
+            return [
+                i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
+                i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
+                i18n.getText("template.column.example." + ScheduleFields.POC)
+            ];
 
-            };
-        }
+        },
 
     };
 });
-
-
-
-
-
 
 
