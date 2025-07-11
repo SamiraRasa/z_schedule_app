@@ -131,42 +131,53 @@ sap.ui.define([
                 const aPocEntries = [];
 
                 const fnParseSheet = (worksheet, aFieldOrder, isSchedule) => {
-                    debugger;
+             
                     const aRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     const aHeaders = aRows[0] || [];
                     const aDataRows = aRows.slice(1);
+         
+                    const expectedHeaders = aFieldOrder.map(fieldKey =>
+                        this.i18n().getText("table.header." + fieldKey) || fieldKey
+                    );
+                    const normalize = (str) => str ? str.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') : '';
+                    const normalizedHeaders = aHeaders.map(normalize);
+                    const normalizedExpectedHeaders = expectedHeaders.map(normalize);
 
+                    
                     const headerMapping = {};
-                    aFieldOrder.forEach((fieldKey, index) => {
-                        const normalizedHeader = this.i18n().getText("table.header." + fieldKey).toLowerCase().replace(/\s+/g, '');
-                        aHeaders.forEach((header, headerIndex) => {
-                            if (header && typeof header === 'string') {
-                                const normalizedExcelHeader = header.toLowerCase().replace(/\s+/g, '');
-                                if (normalizedExcelHeader.includes(normalizedHeader)) {
-                                    headerMapping[headerIndex] = fieldKey;
-                                }
-                            }
-                        });
+                    const missingHeaders = [];
+                    aFieldOrder.forEach((fieldKey, expectedIndex) => {
+                        const normalizedHeader = normalize(this.i18n().getText("table.header." + fieldKey) || fieldKey);
+                        const headerIndex = normalizedHeaders.findIndex(header => header === normalizedHeader);
+                        if (headerIndex === -1) {
+                            missingHeaders.push(expectedHeaders[expectedIndex]);
+                        } else {
+                            headerMapping[headerIndex] = fieldKey;
+                        }
                     });
+                    if (missingHeaders.length > 0) {
+                        throw new Error(this.i18n().getText("error.invalidHeader", [
+                            expectedHeaders.join(", "),
+                            aHeaders.join(", "),
+                            missingHeaders.join(", ")
+                        ]));
+                    }
 
                     return aDataRows
                         .filter(row => !(row.every(cell => cell === null || cell === "" || cell === undefined)))
                         .map(row => {
                             const oEntry = {};
-
                             Object.keys(headerMapping).forEach(headerIndex => {
                                 const fieldKey = headerMapping[headerIndex];
                                 oEntry[fieldKey] = row[headerIndex];
                             });
-                          
-                            if (oEntry[this.TsFields.MILESTONE] !== "M" && oEntry[this.TsFields.MILESTONE] !== "P") {
 
+                            if (oEntry[this.TsFields.MILESTONE] !== "M" && oEntry[this.TsFields.MILESTONE] !== "P") {
                                 const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
                                 const wbsId = oEntry[this.TsFields.WBS_ID] || '';
                                 const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
                                 oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
                             } else if (isSchedule) {
-
                                 oEntry[this.TsFields.WBS_ID] = '';
                             }
 
@@ -208,6 +219,8 @@ sap.ui.define([
                             return oEntry;
                         });
                 };
+
+
                 let scheduleHasRow;
                 let pocHasRow;
 
@@ -215,7 +228,7 @@ sap.ui.define([
                     const wsSchedule = workbook.Sheets["Schedule"];
                     const aParsed = fnParseSheet(wsSchedule, aFieldOrderSchedule, true);
                     scheduleHasRow = aParsed.length;
-                 
+
                     aScheduleEntries.push(...aParsed || []);
                 }
 
@@ -223,45 +236,17 @@ sap.ui.define([
                     const wsPoC = workbook.Sheets["PoC"];
                     const aParsed = fnParseSheet(wsPoC, aFieldOrderPoc, false);
                     pocHasRow = aParsed.length;
-                   
+
                     aPocEntries.push(...aParsed || []);
-
                 }
-
 
                 if (!scheduleHasRow && !pocHasRow) {
                     throw new Error(this.i18n().getText("message.noDataRows"));
                 }
 
-
                 const invalidEntries = [...aScheduleEntries, ...aPocEntries].filter(entry => entry[this.TsFields.STATUS] === "E");
                 if (invalidEntries.length > 0) {
                     oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("message.invalidDateWarning"));
-                }
-
-                const currentScheduleData = oViewModel.getProperty("/scheduleData") || [];
-                const currentPocData = oViewModel.getProperty("/pocData") || [];
-
-                let orderMismatchMessage = "";
-                if (bHasSchedule && currentScheduleData.length > 0) {
-                    const excelRowIds = aScheduleEntries.map(entry => entry[this.TsFields.WBS_ID] || entry[this.TsFields.PROJECT_ID]);
-                    const currentRowIds = currentScheduleData.map(entry => entry[this.TsFields.WBS_ID] || entry[this.TsFields.PROJECT_ID]);
-                    if (JSON.stringify(excelRowIds) !== JSON.stringify(currentRowIds)) {
-                        orderMismatchMessage += "Order mismatch detected in Schedule data.\n";
-                    }
-                }
-
-                if (bHasPoC && currentPocData.length > 0) {
-                    const excelRowIds = aPocEntries.map(entry => entry[this.TsFields.WBS_ID] || entry[this.TsFields.PROJECT_ID]);
-                    const currentRowIds = currentPocData.map(entry => entry[this.TsFields.WBS_ID] || entry[this.TsFields.PROJECT_ID]);
-                    if (JSON.stringify(excelRowIds) !== JSON.stringify(currentRowIds)) {
-                        if (orderMismatchMessage) orderMismatchMessage += "\n";
-                        orderMismatchMessage += "Order mismatch detected in PoC data.\n";
-                    }
-                }
-
-                if (orderMismatchMessage) {
-                    MessageBox.warning(orderMismatchMessage, { title: "Order Mismatch Detected" });
                 }
 
                 oViewModel.setProperty("/fileName", oFile.name);
@@ -306,7 +291,7 @@ sap.ui.define([
             const aScheduleData = oViewModel.getProperty("/scheduleData") || [];
             const aPocData = oViewModel.getProperty("/pocData") || [];
 
-            const MIN_DATE = new Date(Date.UTC(1980, 0, 1)); 
+            const MIN_DATE = new Date(Date.UTC(1980, 0, 1));
 
             aScheduleData.forEach(oExcelRow => {
                 const aValidationErrors = [];
@@ -491,7 +476,7 @@ sap.ui.define([
 
         _updatePoC: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
-            debugger;
+        
             try {
                 const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID], false);
                 if (oUUIDs === null) {
@@ -717,39 +702,7 @@ sap.ui.define([
             return sDate;
         },
 
-        // _formatInputToDate: function (sDate) {
-        //     if (!sDate) {
-        //         return null;
-        //     }
-        //     if (typeof sDate !== "string") {
-        //         sDate = String(sDate);
-        //     }
-        //     const cleaned = sDate.trim();
-        //     // Format: YYYYMMDD
-        //     if (/^\d{8}$/.test(cleaned)) {
-        //         const year = +cleaned.slice(0, 4);
-        //         const month = +cleaned.slice(4, 6) - 1;
-        //         const day = +cleaned.slice(6, 8);
-        //         return new Date(Date.UTC(year, month, day, 0, 0, 0));
-        //     }
-        //     // Format: D.M.YYYY or D-M-YYYY or D/M/YYYY
-        //     const match = cleaned.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-        //     if (match) {
-        //         const day = +match[1];
-        //         const month = +match[2] - 1;
-        //         const year = +match[3];
-        //         const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
-
-        //         if (date.getUTCFullYear() === year &&
-        //             date.getUTCMonth() === month &&
-        //             date.getUTCDate() === day) {
-        //             return date;
-        //         }
-        //         return null;
-        //     }
-        //     return null; // Invalid or unsupported format
-        // },
-
+       
         _formatExcelDate: function (excelDate) {
             if (typeof excelDate !== 'number' || isNaN(excelDate)) return excelDate;
             try {
