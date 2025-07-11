@@ -102,7 +102,6 @@ sap.ui.define([
                     MessageToast.show("No recognized sheets found.");
                     throw new Error("No valid sheets found.");
                 }
-
                 const aDateFields = [
                     this.TsFields.PLANNED_START_DATE,
                     this.TsFields.PLANNED_END_DATE,
@@ -130,103 +129,12 @@ sap.ui.define([
                 const aScheduleEntries = [];
                 const aPocEntries = [];
 
-                const fnParseSheet = (worksheet, aFieldOrder, isSchedule) => {
-             
-                    const aRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    const aHeaders = aRows[0] || [];
-                    const aDataRows = aRows.slice(1);
-         
-                    const expectedHeaders = aFieldOrder.map(fieldKey =>
-                        this.i18n().getText("table.header." + fieldKey) || fieldKey
-                    );
-                    const normalize = (str) => str ? str.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') : '';
-                    const normalizedHeaders = aHeaders.map(normalize);
-                    const normalizedExpectedHeaders = expectedHeaders.map(normalize);
-
-                    
-                    const headerMapping = {};
-                    const missingHeaders = [];
-                    aFieldOrder.forEach((fieldKey, expectedIndex) => {
-                        const normalizedHeader = normalize(this.i18n().getText("table.header." + fieldKey) || fieldKey);
-                        const headerIndex = normalizedHeaders.findIndex(header => header === normalizedHeader);
-                        if (headerIndex === -1) {
-                            missingHeaders.push(expectedHeaders[expectedIndex]);
-                        } else {
-                            headerMapping[headerIndex] = fieldKey;
-                        }
-                    });
-                    if (missingHeaders.length > 0) {
-                        throw new Error(this.i18n().getText("error.invalidHeader", [
-                            expectedHeaders.join(", "),
-                            aHeaders.join(", "),
-                            missingHeaders.join(", ")
-                        ]));
-                    }
-
-                    return aDataRows
-                        .filter(row => !(row.every(cell => cell === null || cell === "" || cell === undefined)))
-                        .map(row => {
-                            const oEntry = {};
-                            Object.keys(headerMapping).forEach(headerIndex => {
-                                const fieldKey = headerMapping[headerIndex];
-                                oEntry[fieldKey] = row[headerIndex];
-                            });
-
-                            if (oEntry[this.TsFields.MILESTONE] !== "M" && oEntry[this.TsFields.MILESTONE] !== "P") {
-                                const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
-                                const wbsId = oEntry[this.TsFields.WBS_ID] || '';
-                                const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
-                                oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
-                            } else if (isSchedule) {
-                                oEntry[this.TsFields.WBS_ID] = '';
-                            }
-
-                            let hasInvalidDate = false;
-                            aDateFields.forEach(sDateKey => {
-                                const rawDate = oEntry[sDateKey];
-                                if (rawDate) {
-                                    if (typeof rawDate === 'number') {
-                                        const formattedDate = this._formatExcelDate(rawDate);
-                                        if (formattedDate instanceof Date) {
-                                            oEntry[sDateKey] = formattedDate;
-                                        } else {
-                                            oEntry[sDateKey] = rawDate;
-                                            hasInvalidDate = true;
-                                        }
-                                    } else if (typeof rawDate === 'string') {
-                                        const formattedDate = this._formatInputToDate(rawDate);
-                                        if (formattedDate instanceof Date) {
-                                            oEntry[sDateKey] = formattedDate;
-                                        } else {
-                                            oEntry[sDateKey] = rawDate;
-                                            hasInvalidDate = true;
-                                        }
-                                    } else {
-                                        oEntry[sDateKey] = rawDate;
-                                        hasInvalidDate = true;
-                                    }
-                                } else {
-                                    oEntry[sDateKey] = null;
-                                }
-                            });
-
-                            oEntry.dontCreate = hasInvalidDate;
-                            oEntry[this.TsFields.STATUS] = hasInvalidDate ? "E" : "P";
-                            oEntry[this.TsFields.STATUS_MESSAGE] = hasInvalidDate
-                                ? this.i18n().getText("status.invalidDateFormat")
-                                : this.i18n().getText("status.entry.pending");
-
-                            return oEntry;
-                        });
-                };
-
-
                 let scheduleHasRow;
                 let pocHasRow;
 
                 if (bHasSchedule) {
                     const wsSchedule = workbook.Sheets["Schedule"];
-                    const aParsed = fnParseSheet(wsSchedule, aFieldOrderSchedule, true);
+                    const aParsed = this._parseSheet(wsSchedule, aFieldOrderSchedule, aDateFields, true);
                     scheduleHasRow = aParsed.length;
 
                     aScheduleEntries.push(...aParsed || []);
@@ -234,7 +142,7 @@ sap.ui.define([
 
                 if (bHasPoC) {
                     const wsPoC = workbook.Sheets["PoC"];
-                    const aParsed = fnParseSheet(wsPoC, aFieldOrderPoc, false);
+                    const aParsed = this._parseSheet(wsPoC, aFieldOrderPoc, aDateFields, false);
                     pocHasRow = aParsed.length;
 
                     aPocEntries.push(...aParsed || []);
@@ -284,6 +192,75 @@ sap.ui.define([
                 BusyIndicator.hide();
             }
         },
+
+
+        _parseSheet: function (worksheet, aFieldOrder, aDateFields, isSchedule) {
+
+
+            const aRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const aHeaders = aRows[0] || [];
+            const aDataRows = aRows.slice(1);
+
+            if (aHeaders?.length !== aFieldOrder.length) {
+                throw new Error(this.i18n().getText("error.invalidHeader"));
+            }
+            return aDataRows
+                .filter(row => !(row.every(cell => cell === null || cell === "" || cell === undefined)))
+                .map(row => {
+                    const oEntry = {};
+
+                    aFieldOrder.forEach((fieldKey, i) => {
+                        oEntry[fieldKey] = row[i];
+                    });
+
+                    if (oEntry[this.TsFields.MILESTONE] !== "M" && oEntry[this.TsFields.MILESTONE] !== "P") {
+                        const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
+                        const wbsId = oEntry[this.TsFields.WBS_ID] || '';
+                        const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
+                        oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
+                    } else if (isSchedule) {
+                        oEntry[this.TsFields.WBS_ID] = '';
+                    }
+
+                    let hasInvalidDate = false;
+                    aDateFields.forEach(sDateKey => {
+                        const rawDate = oEntry[sDateKey];
+                        if (rawDate) {
+                            if (typeof rawDate === 'number') {
+                                const formattedDate = this._formatExcelDate(rawDate);
+                                if (formattedDate instanceof Date) {
+                                    oEntry[sDateKey] = formattedDate;
+                                } else {
+                                    oEntry[sDateKey] = rawDate;
+                                    hasInvalidDate = true;
+                                }
+                            } else if (typeof rawDate === 'string') {
+                                const formattedDate = this._formatInputToDate(rawDate);
+                                if (formattedDate instanceof Date) {
+                                    oEntry[sDateKey] = formattedDate;
+                                } else {
+                                    oEntry[sDateKey] = rawDate;
+                                    hasInvalidDate = true;
+                                }
+                            } else {
+                                oEntry[sDateKey] = rawDate;
+                                hasInvalidDate = true;
+                            }
+                        } else {
+                            oEntry[sDateKey] = null;
+                        }
+                    });
+
+                    oEntry.dontCreate = hasInvalidDate;
+                    oEntry[this.TsFields.STATUS] = hasInvalidDate ? "E" : "P";
+                    oEntry[this.TsFields.STATUS_MESSAGE] = hasInvalidDate
+                        ? this.i18n().getText("status.invalidDateFormat")
+                        : this.i18n().getText("status.entry.pending");
+
+                    return oEntry;
+                });
+        },
+
 
         // === Validierung der Einträge ===
         _validateEntries: async function (bIsMilestone = false) {
@@ -476,7 +453,7 @@ sap.ui.define([
 
         _updatePoC: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
-        
+
             try {
                 const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID], false);
                 if (oUUIDs === null) {
@@ -702,7 +679,7 @@ sap.ui.define([
             return sDate;
         },
 
-       
+
         _formatExcelDate: function (excelDate) {
             if (typeof excelDate !== 'number' || isNaN(excelDate)) return excelDate;
             try {
@@ -781,6 +758,68 @@ sap.ui.define([
                 currentTab: "schedule"
             }));
         },
+
+        // onSearch: function (oEvent) {
+        //     var aFilters = [];
+        //     var sProjectId = this.byId("inputProjectId").getValue();
+        //     var sWbsId = this.byId("inputWbsId").getValue();
+        //     var aSelectedStatus = this.byId("selectStatus").getSelectedKeys();
+        //     var oPlannedStartDate = this.byId("plannedStartDate").getDateValue();
+        //     var oPlannedEndDate = this.byId("plannedEndDate").getDateValue();
+        //     var sMilestone = this.byId("selectMilestone").getSelectedKey();
+
+        //     if (sProjectId) {
+        //         sProjectId = sProjectId.trim().toLowerCase();
+        //         aFilters.push(new Filter({
+        //             path: "projectId",
+        //             operator: FilterOperator.Contains,
+        //             value1: sProjectId,
+        //             caseSensitive: false
+        //         }));
+        //     }
+        //     if (sWbsId) {
+        //         aFilters.push(new Filter("wbsId", FilterOperator.Contains, sWbsId));
+        //     }
+        //     if (aSelectedStatus.length > 0) {
+        //         var aStatusFilters = aSelectedStatus.map(function (sStatus) {
+        //             return new Filter("status", FilterOperator.EQ, sStatus);
+        //         });
+        //         aFilters.push(new Filter(aStatusFilters, false));
+        //     }
+
+        //     var aScheduleFilters = [...aFilters];
+        //     if (oPlannedStartDate) {
+        //         aScheduleFilters.push(new Filter("plannedStartDate", FilterOperator.GE, oPlannedStartDate));
+        //     }
+        //     if (oPlannedEndDate) {
+        //         aScheduleFilters.push(new Filter("plannedEndDate", FilterOperator.LE, oPlannedEndDate));
+        //     }
+        //     if (sMilestone && sMilestone !== "") {
+        //         aScheduleFilters.push(new Filter("milestone", FilterOperator.EQ, sMilestone));
+        //     }
+
+        //     var oViewModel = this.getView().getModel("viewModel");
+        //     var sCurrentTab = oViewModel.getProperty("/currentTab");
+
+        //     console.log("Current Tab:", sCurrentTab);
+        //     console.log("aFilters (for poc):", aFilters);
+        //     console.log("aScheduleFilters (for schedule):", aScheduleFilters);
+
+        //     var oTableSchedule = this.byId("idscheduleTable") || this.byId("moreDetailTable");
+        //     var oBindingSchedule = oTableSchedule && oTableSchedule.getBinding("items");
+        //     if (oBindingSchedule && sCurrentTab === "schedule") {
+        //         oBindingSchedule.filter(aScheduleFilters.length > 0 ? aScheduleFilters : []);
+        //         console.log("Filtered scheduleData binding");
+        //     }
+
+        //     var oTablePoc = this.byId("idscheduleTablePoc");
+        //     var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
+        //     if (oBindingPoc && sCurrentTab === "poc") {
+        //         oBindingPoc.filter(aFilters.length > 0 ? aFilters : []);
+        //         console.log("Filtered pocData binding");
+        //     }
+        // },
+
 
         onSearch: function (oEvent) {
             var aFilters = [];
