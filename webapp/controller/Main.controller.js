@@ -782,68 +782,6 @@ sap.ui.define([
             }));
         },
 
-        // onSearch: function (oEvent) {
-        //     var aFilters = [];
-        //     var sProjectId = this.byId("inputProjectId").getValue();
-        //     var sWbsId = this.byId("inputWbsId").getValue();
-        //     var aSelectedStatus = this.byId("selectStatus").getSelectedKeys();
-        //     var oPlannedStartDate = this.byId("plannedStartDate").getDateValue();
-        //     var oPlannedEndDate = this.byId("plannedEndDate").getDateValue();
-        //     var sMilestone = this.byId("selectMilestone").getSelectedKey();
-
-        //     if (sProjectId) {
-        //         sProjectId = sProjectId.trim().toLowerCase();
-        //         aFilters.push(new Filter({
-        //             path: "projectId",
-        //             operator: FilterOperator.Contains,
-        //             value1: sProjectId,
-        //             caseSensitive: false
-        //         }));
-        //     }
-        //     if (sWbsId) {
-        //         aFilters.push(new Filter("wbsId", FilterOperator.Contains, sWbsId));
-        //     }
-        //     if (aSelectedStatus.length > 0) {
-        //         var aStatusFilters = aSelectedStatus.map(function (sStatus) {
-        //             return new Filter("status", FilterOperator.EQ, sStatus);
-        //         });
-        //         aFilters.push(new Filter(aStatusFilters, false));
-        //     }
-
-        //     var aScheduleFilters = [...aFilters];
-        //     if (oPlannedStartDate) {
-        //         aScheduleFilters.push(new Filter("plannedStartDate", FilterOperator.GE, oPlannedStartDate));
-        //     }
-        //     if (oPlannedEndDate) {
-        //         aScheduleFilters.push(new Filter("plannedEndDate", FilterOperator.LE, oPlannedEndDate));
-        //     }
-        //     if (sMilestone && sMilestone !== "") {
-        //         aScheduleFilters.push(new Filter("milestone", FilterOperator.EQ, sMilestone));
-        //     }
-
-        //     var oViewModel = this.getView().getModel("viewModel");
-        //     var sCurrentTab = oViewModel.getProperty("/currentTab");
-
-        //     console.log("Current Tab:", sCurrentTab);
-        //     console.log("aFilters (for poc):", aFilters);
-        //     console.log("aScheduleFilters (for schedule):", aScheduleFilters);
-
-        //     var oTableSchedule = this.byId("idscheduleTable") || this.byId("moreDetailTable");
-        //     var oBindingSchedule = oTableSchedule && oTableSchedule.getBinding("items");
-        //     if (oBindingSchedule && sCurrentTab === "schedule") {
-        //         oBindingSchedule.filter(aScheduleFilters.length > 0 ? aScheduleFilters : []);
-        //         console.log("Filtered scheduleData binding");
-        //     }
-
-        //     var oTablePoc = this.byId("idscheduleTablePoc");
-        //     var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
-        //     if (oBindingPoc && sCurrentTab === "poc") {
-        //         oBindingPoc.filter(aFilters.length > 0 ? aFilters : []);
-        //         console.log("Filtered pocData binding");
-        //     }
-        // },
-
-
         onSearch: function (oEvent) {
             var aFilters = [];
             var sProjectId = this.byId("inputProjectId").getValue();
