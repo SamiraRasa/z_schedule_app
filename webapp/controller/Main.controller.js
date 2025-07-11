@@ -131,6 +131,7 @@ sap.ui.define([
                 const aPocEntries = [];
 
                 const fnParseSheet = (worksheet, aFieldOrder, isSchedule) => {
+                    debugger;
                     const aRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     const aHeaders = aRows[0] || [];
                     const aDataRows = aRows.slice(1);
@@ -157,11 +158,17 @@ sap.ui.define([
                                 const fieldKey = headerMapping[headerIndex];
                                 oEntry[fieldKey] = row[headerIndex];
                             });
+                          
+                            if (oEntry[this.TsFields.MILESTONE] !== "M" && oEntry[this.TsFields.MILESTONE] !== "P") {
 
-                            const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
-                            const wbsId = oEntry[this.TsFields.WBS_ID] || '';
-                            const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
-                            oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
+                                const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
+                                const wbsId = oEntry[this.TsFields.WBS_ID] || '';
+                                const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
+                                oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
+                            } else if (isSchedule) {
+
+                                oEntry[this.TsFields.WBS_ID] = '';
+                            }
 
                             let hasInvalidDate = false;
                             aDateFields.forEach(sDateKey => {
@@ -201,24 +208,31 @@ sap.ui.define([
                             return oEntry;
                         });
                 };
+                let scheduleHasRow;
+                let pocHasRow;
 
                 if (bHasSchedule) {
                     const wsSchedule = workbook.Sheets["Schedule"];
                     const aParsed = fnParseSheet(wsSchedule, aFieldOrderSchedule, true);
-                    if (aParsed.length === 0) {
-                        throw new Error(this.i18n().getText("message.noDataRows"));
-                    }
-                    aScheduleEntries.push(...aParsed);
+                    scheduleHasRow = aParsed.length;
+                 
+                    aScheduleEntries.push(...aParsed || []);
                 }
 
                 if (bHasPoC) {
                     const wsPoC = workbook.Sheets["PoC"];
                     const aParsed = fnParseSheet(wsPoC, aFieldOrderPoc, false);
-                    if (aParsed.length === 0) {
-                        throw new Error(this.i18n().getText("message.noDataRows"));
-                    }
-                    aPocEntries.push(...aParsed);
+                    pocHasRow = aParsed.length;
+                   
+                    aPocEntries.push(...aParsed || []);
+
                 }
+
+
+                if (!scheduleHasRow && !pocHasRow) {
+                    throw new Error(this.i18n().getText("message.noDataRows"));
+                }
+
 
                 const invalidEntries = [...aScheduleEntries, ...aPocEntries].filter(entry => entry[this.TsFields.STATUS] === "E");
                 if (invalidEntries.length > 0) {
@@ -292,17 +306,10 @@ sap.ui.define([
             const aScheduleData = oViewModel.getProperty("/scheduleData") || [];
             const aPocData = oViewModel.getProperty("/pocData") || [];
 
-            const MIN_DATE = new Date(Date.UTC(1980, 0, 1)); // 01/01/1980
+            const MIN_DATE = new Date(Date.UTC(1980, 0, 1)); 
 
             aScheduleData.forEach(oExcelRow => {
                 const aValidationErrors = [];
-
-                // بررسی فیلدهای اجباری غیر از تاریخ
-                // const aMissingFields = this._validateMandatoryFields(oExcelRow, oExcelRow[this.TsFields.MILESTONE]);
-                // if (aMissingFields.length > 0) {
-                //     const sFields = aMissingFields.join(", ");
-                //     aValidationErrors.push(this.i18n().getText("status.entry.missingMandatoryFields", [sFields]));
-                // }
 
                 // Pflichtfelder prüfen
                 const aMissingFields = this._validateMandatoryFields(oExcelRow, oExcelRow[this.TsFields.MILESTONE] === "P" || oExcelRow[this.TsFields.MILESTONE] === "M");
@@ -321,20 +328,6 @@ sap.ui.define([
                     this.TsFields.BASELINE_START_DATE,
                     this.TsFields.BASELINE_END_DATE
                 ];
-
-
-                // const mandatoryDateFields = [
-                //     this.TsFields.PLANNED_START_DATE,
-                //     this.TsFields.PLANNED_END_DATE
-                // ];
-
-
-                // mandatoryDateFields.forEach(field => {
-                //     const dateValue = oExcelRow[field];
-                //     if (dateValue === undefined || dateValue === null || dateValue === "") {
-                //         aValidationErrors.push(this.i18n().getText("status.entry.missingMandatoryFields", [field]));
-                //     }
-                // });
 
 
                 dateFields.forEach(field => {
@@ -498,6 +491,7 @@ sap.ui.define([
 
         _updatePoC: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
+            debugger;
             try {
                 const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID], false);
                 if (oUUIDs === null) {
