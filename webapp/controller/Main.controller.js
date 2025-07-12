@@ -164,10 +164,6 @@ sap.ui.define([
                     oViewModel.setProperty("/currentTab", "poc");
                 }
 
-                // if (aScheduleEntries.length === 0 && aPocEntries.length === 0) {
-                //     throw new Error(this.i18n().getText("message.noDataRows"));
-                // }
-
                 await this._validateEntries();
                 await this._processExcelData();
 
@@ -203,25 +199,22 @@ sap.ui.define([
                         oEntry[fieldKey] = row[i];
                     });
 
-                 
-                   const milestoneValue = oEntry[this.TsFields.MILESTONE]?.trim();
+
+                    const milestoneValue = oEntry[this.TsFields.MILESTONE]?.trim();
                     if (milestoneValue) {
                         debugger;
                         if (milestoneValue !== 'P' && milestoneValue !== 'M') {
-                                
                             oEntry[this.TsFields.STATUS] = "E";
                             oEntry[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]);
                             oEntry.dontCreate = true;
-                           
-                        } else if (isSchedule) {
                             oEntry[this.TsFields.WBS_ID] = '';
-                        } else {
-                            const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
-                            const wbsId = oEntry[this.TsFields.WBS_ID] || '';
-                            const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
-                            oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
                         }
-
+                    }
+                    else {
+                        const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
+                        const wbsId = oEntry[this.TsFields.WBS_ID] || '';
+                        const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
+                        oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
                     }
                     let hasInvalidDate = false;
                     aDateFields.forEach(sDateKey => {
@@ -272,6 +265,13 @@ sap.ui.define([
 
             aScheduleData.forEach(oExcelRow => {
                 const aValidationErrors = [];
+
+                const milestoneValue = oExcelRow[this.TsFields.MILESTONE]?.trim();
+                if (milestoneValue && milestoneValue !== 'P' && milestoneValue !== 'M') {
+                    oExcelRow[this.TsFields.STATUS] = "E";
+                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]);
+                    return oExcelRow;
+                }
 
                 // Pflichtfelder prüfen
                 const aMissingFields = this._validateMandatoryFields(oExcelRow, oExcelRow[this.TsFields.MILESTONE] === "P" || oExcelRow[this.TsFields.MILESTONE] === "M");
