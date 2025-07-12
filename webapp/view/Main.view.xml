@@ -108,10 +108,9 @@
                 </fb:FilterBar>
             </f:DynamicPageHeader>
         </f:header>
-
         <f:content>
-            <VBox class="sapUiTinyMargin" fitContainer="true">
-                <Toolbar>
+            <FlexBox direction="Column" fitContainer="true">
+                <OverflowToolbar >
                     <SegmentedButton
                         id="tabSwitch"
                         selectedKey="{viewModel>/currentTab}"
@@ -156,13 +155,13 @@
                                 tooltip="{i18n>lessDetailViewTooltip}" />
                         </items>
                     </SegmentedButton>
-                </Toolbar>
+                </OverflowToolbar>
                 <!-- More Detail View -->
                 <Table
                     id="moreDetailTable"
                     items="{/scheduleData}"
                     growing="true"
-                    growingThreshold="20"
+                    growingThreshold="10"
                     growingScrollToLoad="true"
                     sticky="ColumnHeaders,HeaderToolbar"
                     visible="{= ${viewModel>/currentView} === 'more'}"
@@ -189,7 +188,7 @@
                         <ColumnListItem>
                             <cells>
                                 <!-- Projektinfos -->
-                                <VBox class="sapUiTinyMargin">
+                                <VBox >
                                     <Label text="{i18n>table.header.projectId}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus text="{= ${projectId} ? ${projectId} : '-' }"
@@ -197,14 +196,11 @@
                                     <Label text="{i18n>table.header.wbsId}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus text="{= ${wbsId} ? ${wbsId} : '-' }"
-                                        state="Information" class="sapUiTinyMarginBottom" />
-                                    <!-- <Label text="{i18n>table.header.poc}"
-                                        class="sapUiTinyMarginBottom" />
-                                    <ObjectStatus text="{= ${poc} || ${poc} === 0 ? ${poc} : '-' }"
-                                        class="sapUiTinyMarginBottom" /> -->
+                                        state="Information" />
+                                 
                                 </VBox>
                                 <!-- Planned Dates -->
-                                <VBox class="sapUiTinyMargin">
+                                <VBox >
                                     <Label text="{i18n>table.header.plannedStartDate}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text
@@ -214,10 +210,10 @@
                                         class="sapUiTinyMarginBottom" />
                                     <Text
                                         text="{= ${plannedEndDate} ? ${path: 'plannedEndDate', formatter: '.formatter.formatDate'} : '-' }"
-                                        class="sapUiTinyMarginBottom" />
+                                        />
                                 </VBox>
                                 <!-- Baseline Dates -->
-                                <VBox class="sapUiTinyMargin">
+                                <VBox >
                                     <Label text="{i18n>table.header.baselineStartDate}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text
@@ -227,10 +223,10 @@
                                         class="sapUiTinyMarginBottom" />
                                     <Text
                                         text="{= ${baselineEndDate} ? ${path: 'baselineEndDate', formatter: '.formatter.formatDate'} : '-' }"
-                                        class="sapUiTinyMarginBottom" />
+                                        />
                                 </VBox>
                                 <!-- Milestone -->
-                                <VBox class="sapUiTinyMargin">
+                                <VBox >
                                     <Label text="{i18n>table.header.milestoneName}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus
@@ -239,12 +235,10 @@
                                     <Label text="{i18n>table.header.milestone}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus text="{= ${milestone} ? ${milestone} : '-' }"
-                                        state="Information" class="sapUiTinyMarginBottom" />
+                                        state="Information" />
                                 </VBox>
                                 <!-- Status -->
-                                <VBox class="sapUiTinyMargin">
-                                    <Label text="{i18n>table.header.status}"
-                                        class="sapUiTinyMarginBottom" />
+                                <VBox >
                                     <ObjectStatus
                                         text="{path: 'status', formatter: '.formatter.formatStatusText'}"
                                         icon="{path: 'status', formatter: '.formatter.formatStatusIcon'}"
@@ -258,7 +252,7 @@
                                     <Label text="{i18n>table.header.description}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text text="{= ${description} ? ${description} : '-' }"
-                                        class="sapUiTinyMarginBottom" />
+                                       />
                                 </VBox>
                             </cells>
                         </ColumnListItem>
@@ -282,11 +276,11 @@
                             <Text text="{i18n>table.header.projectId}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
-                           >
+                          >
                             <Text text="{i18n>table.header.wbsId}" />
                         </Column>
                         <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Inline"
-                         >
+                          >
                             <Text text="{i18n>table.header.plannedStartDate}" />
                         </Column>
                         <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Inline"
@@ -372,7 +366,7 @@
                             <Text text="{i18n>table.header.wbsId}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
-                          >
+                        >
                             <Text text="{i18n>table.header.poc}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
@@ -400,7 +394,7 @@
                         </ColumnListItem>
                     </items>
                 </Table>
-            </VBox>
+            </FlexBox>
         </f:content>
     </f:DynamicPage>
 </mvc:View>

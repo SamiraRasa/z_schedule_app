@@ -6,10 +6,9 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-    "sap/ui/export/Spreadsheet",
     "xlsx",
     "sap/ui/core/BusyIndicator"
-], (BaseController, FieldDefinitions, MessageBox, MessageToast, JSONModel, Filter, FilterOperator, Spreadsheet, XLSX, BusyIndicator) => {
+], (BaseController, FieldDefinitions, MessageBox, MessageToast, JSONModel, Filter, FilterOperator, XLSX, BusyIndicator) => {
     "use strict";
 
     return BaseController.extend("at.zeta.ppm.scheduleupload.controller.Main", {
@@ -44,10 +43,8 @@ sap.ui.define([
             XLSX.utils.book_append_sheet(wb, wsSchedule, "Schedule");
             XLSX.utils.book_append_sheet(wb, wsPoc, "PoC");
 
-            console.log("Worksheet Schedule:", wsSchedule);
-            console.log("Worksheet PoC:", wsPoc);
             XLSX.writeFile(wb, "Schedule_Template.xlsx");
-            MessageToast.show("Excel template downloaded successfully");
+
         },
 
         handleTypeMissmatch: function (oEvent) {
@@ -71,15 +68,11 @@ sap.ui.define([
 
             this._reset();
             const oViewModel = this.getViewModel();
-            if (!oViewModel) {
-                this._showError(this.i18n().getText(), "error.modelNotFound", "Error: Model data not found.");
-                return;
-            }
 
             oViewModel.setProperty("/uploadStatus", "P");
             oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadInProgress"));
 
-            const oFile = oEvent.getParameter("files") && oEvent.getParameter("files")[0];
+            const oFile = oEvent.getParameter("files")?.[0];
             if (!oFile || !window.FileReader) {
                 MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
                 return;
@@ -99,8 +92,7 @@ sap.ui.define([
                 const bHasPoC = workbook.SheetNames.includes("PoC");
 
                 if (!bHasSchedule && !bHasPoC) {
-                    MessageToast.show("No recognized sheets found.");
-                    throw new Error("No valid sheets found.");
+                    throw new Error(this.i18n().getText("error.notValidSheet"));
                 }
                 const aDateFields = [
                     this.TsFields.PLANNED_START_DATE,
@@ -132,6 +124,7 @@ sap.ui.define([
                 let scheduleHasRow;
                 let pocHasRow;
 
+
                 if (bHasSchedule) {
                     const wsSchedule = workbook.Sheets["Schedule"];
                     const aParsed = this._parseSheet(wsSchedule, aFieldOrderSchedule, aDateFields, true);
@@ -160,7 +153,7 @@ sap.ui.define([
                 oViewModel.setProperty("/fileName", oFile.name);
                 oViewModel.setProperty("/filePath", oEvent.getParameter("newValue"));
                 oViewModel.setProperty("/uploadStatus", "S");
-                oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadedSucessfully"));
+                oViewModel.setProperty("/uploadStatusMessage", this.i18n().getText("status.fileLoadedSuccessfully"));
                 oViewModel.setProperty("/scheduleData", aScheduleEntries);
                 oViewModel.setProperty("/pocData", aPocEntries);
                 oViewModel.setProperty("/existingEntries", []);
@@ -171,9 +164,9 @@ sap.ui.define([
                     oViewModel.setProperty("/currentTab", "poc");
                 }
 
-                if (aScheduleEntries.length === 0 && aPocEntries.length === 0) {
-                    throw new Error(this.i18n().getText("message.noDataRows"));
-                }
+                // if (aScheduleEntries.length === 0 && aPocEntries.length === 0) {
+                //     throw new Error(this.i18n().getText("message.noDataRows"));
+                // }
 
                 await this._validateEntries();
                 await this._processExcelData();
@@ -193,10 +186,7 @@ sap.ui.define([
             }
         },
 
-
         _parseSheet: function (worksheet, aFieldOrder, aDateFields, isSchedule) {
-
-
             const aRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             const aHeaders = aRows[0] || [];
             const aDataRows = aRows.slice(1);
@@ -213,15 +203,26 @@ sap.ui.define([
                         oEntry[fieldKey] = row[i];
                     });
 
-                    if (oEntry[this.TsFields.MILESTONE] !== "M" && oEntry[this.TsFields.MILESTONE] !== "P") {
-                        const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
-                        const wbsId = oEntry[this.TsFields.WBS_ID] || '';
-                        const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
-                        oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
-                    } else if (isSchedule) {
-                        oEntry[this.TsFields.WBS_ID] = '';
-                    }
+                 
+                   const milestoneValue = oEntry[this.TsFields.MILESTONE]?.trim();
+                    if (milestoneValue) {
+                        debugger;
+                        if (milestoneValue !== 'P' && milestoneValue !== 'M') {
+                                
+                            oEntry[this.TsFields.STATUS] = "E";
+                            oEntry[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]);
+                            oEntry.dontCreate = true;
+                           
+                        } else if (isSchedule) {
+                            oEntry[this.TsFields.WBS_ID] = '';
+                        } else {
+                            const projectId = oEntry[this.TsFields.PROJECT_ID] || '';
+                            const wbsId = oEntry[this.TsFields.WBS_ID] || '';
+                            const normalizedWbsId = (wbsId != null ? String(wbsId).replace(/\./g, '') : '');
+                            oEntry[this.TsFields.WBS_ID] = `${projectId}.${normalizedWbsId}`;
+                        }
 
+                    }
                     let hasInvalidDate = false;
                     aDateFields.forEach(sDateKey => {
                         const rawDate = oEntry[sDateKey];
@@ -260,7 +261,6 @@ sap.ui.define([
                     return oEntry;
                 });
         },
-
 
         // === Validierung der Einträge ===
         _validateEntries: async function (bIsMilestone = false) {
@@ -319,17 +319,10 @@ sap.ui.define([
                 const baselineEnd = oExcelRow[this.TsFields.BASELINE_END_DATE];
                 if (baselineStart && baselineEnd && baselineStart instanceof Date && baselineEnd instanceof Date) {
                     if (baselineEnd < baselineStart) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStartBaseline"));
+                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStart"));
                     }
                 }
 
-
-                if (oExcelRow[this.TsFields.MILESTONE]) {
-                    const sMilestone = oExcelRow[this.TsFields.MILESTONE];
-                    if (sMilestone !== "M" && sMilestone !== "P") {
-                        aValidationErrors.push(this.i18n().getText("status.entry.invalidMilestone", [sMilestone]));
-                    }
-                }
 
                 if (aValidationErrors.length > 0) {
                     oExcelRow.dontCreate = true;
@@ -759,66 +752,6 @@ sap.ui.define([
             }));
         },
 
-        // onSearch: function (oEvent) {
-        //     var aFilters = [];
-        //     var sProjectId = this.byId("inputProjectId").getValue();
-        //     var sWbsId = this.byId("inputWbsId").getValue();
-        //     var aSelectedStatus = this.byId("selectStatus").getSelectedKeys();
-        //     var oPlannedStartDate = this.byId("plannedStartDate").getDateValue();
-        //     var oPlannedEndDate = this.byId("plannedEndDate").getDateValue();
-        //     var sMilestone = this.byId("selectMilestone").getSelectedKey();
-
-        //     if (sProjectId) {
-        //         sProjectId = sProjectId.trim().toLowerCase();
-        //         aFilters.push(new Filter({
-        //             path: "projectId",
-        //             operator: FilterOperator.Contains,
-        //             value1: sProjectId,
-        //             caseSensitive: false
-        //         }));
-        //     }
-        //     if (sWbsId) {
-        //         aFilters.push(new Filter("wbsId", FilterOperator.Contains, sWbsId));
-        //     }
-        //     if (aSelectedStatus.length > 0) {
-        //         var aStatusFilters = aSelectedStatus.map(function (sStatus) {
-        //             return new Filter("status", FilterOperator.EQ, sStatus);
-        //         });
-        //         aFilters.push(new Filter(aStatusFilters, false));
-        //     }
-
-        //     var aScheduleFilters = [...aFilters];
-        //     if (oPlannedStartDate) {
-        //         aScheduleFilters.push(new Filter("plannedStartDate", FilterOperator.GE, oPlannedStartDate));
-        //     }
-        //     if (oPlannedEndDate) {
-        //         aScheduleFilters.push(new Filter("plannedEndDate", FilterOperator.LE, oPlannedEndDate));
-        //     }
-        //     if (sMilestone && sMilestone !== "") {
-        //         aScheduleFilters.push(new Filter("milestone", FilterOperator.EQ, sMilestone));
-        //     }
-
-        //     var oViewModel = this.getView().getModel("viewModel");
-        //     var sCurrentTab = oViewModel.getProperty("/currentTab");
-
-        //     console.log("Current Tab:", sCurrentTab);
-        //     console.log("aFilters (for poc):", aFilters);
-        //     console.log("aScheduleFilters (for schedule):", aScheduleFilters);
-
-        //     var oTableSchedule = this.byId("idscheduleTable") || this.byId("moreDetailTable");
-        //     var oBindingSchedule = oTableSchedule && oTableSchedule.getBinding("items");
-        //     if (oBindingSchedule && sCurrentTab === "schedule") {
-        //         oBindingSchedule.filter(aScheduleFilters.length > 0 ? aScheduleFilters : []);
-        //         console.log("Filtered scheduleData binding");
-        //     }
-
-        //     var oTablePoc = this.byId("idscheduleTablePoc");
-        //     var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
-        //     if (oBindingPoc && sCurrentTab === "poc") {
-        //         oBindingPoc.filter(aFilters.length > 0 ? aFilters : []);
-        //         console.log("Filtered pocData binding");
-        //     }
-        // },
 
 
         onSearch: function (oEvent) {
