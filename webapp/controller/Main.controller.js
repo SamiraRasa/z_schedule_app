@@ -815,16 +815,15 @@ sap.ui.define([
             var oBindingSchedule = oTableSchedule.getBinding("items");
             if (oBindingSchedule) {
                 oBindingSchedule.filter([]);
+             
             }
             var oTablePoc = this.byId("idscheduleTablePoc");
             var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
             if (oBindingPoc) {
                 oBindingPoc.filter([]);
+               
             }
-            var oModel = this.getView().getModel(); 
-            if (oModel) {
-                oModel.refresh(true);
-            }
+            
             },
 
             onFilterChange: function () {
