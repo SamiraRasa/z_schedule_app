@@ -46,7 +46,7 @@ sap.ui.define([
             XLSX.writeFile(wb, "Schedule_Template.xlsx");
 
         },
-      
+
         handleTypeMissmatch: function (oEvent) {
             const oResourceBundle = this.getView().getModel("i18n").getResourceBundle();
             const aFileTypes = oEvent.getSource().getFileType();
@@ -816,28 +816,31 @@ sap.ui.define([
             if (oBindingSchedule) {
                 oBindingSchedule.filter([]);
             }
-
             var oTablePoc = this.byId("idscheduleTablePoc");
             var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
             if (oBindingPoc) {
                 oBindingPoc.filter([]);
             }
-        },
+            var oModel = this.getView().getModel(); 
+            if (oModel) {
+                oModel.refresh(true);
+            }
+            },
 
-        onStatusSelectionChange: function () {
-            this.onSearch();
-        },
+            onFilterChange: function () {
+                this.onSearch();
+            },
 
-        onViewSwitch: function (oEvent) {
-            var sKey = oEvent.getParameter("key");
-            this.getViewModel().setProperty("/currentView", sKey);
-            this.onSearch();
-        },
+            onViewSwitch: function (oEvent) {
+                var sKey = oEvent.getParameter("key");
+                this.getViewModel().setProperty("/currentView", sKey);
+                this.onSearch();
+            },
 
-        onTabSwitch: function (oEvent) {
-            var sKey = oEvent.getParameter("key");
-            var oViewModel = this.getView().getModel("viewModel");
-            oViewModel.setProperty("/currentTab", sKey);
-        },
-    });
+            onTabSwitch: function (oEvent) {
+                var sKey = oEvent.getParameter("key");
+                var oViewModel = this.getView().getModel("viewModel");
+                oViewModel.setProperty("/currentTab", sKey);
+            },
+        });
 });

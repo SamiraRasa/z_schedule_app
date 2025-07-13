@@ -52,14 +52,14 @@
                             visibleInFilterBar="true"
                             groupName="Group1">
                             <fb:control>
-                                <Input id="inputProjectId" submit=".onSearch"
+                                <Input id="inputProjectId" submit=".onSearch" liveChange=".onFilterChange"
                                     showClearIcon="true" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="wbsId" label="{i18n>filter.wbsId}"
                             groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <Input id="inputWbsId" submit=".onSearch"
+                                <Input id="inputWbsId" submit=".onSearch" liveChange=".onFilterChange"
                                     showClearIcon="true" />
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -67,7 +67,7 @@
                             groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox id="selectStatus"
-                                    selectionChange=".onStatusSelectionChange">
+                                    selectionChange=".onFilterChange">
                                     <core:Item key="S" text="{i18n>filter.status.success}" />
                                     <core:Item key="E" text="{i18n>filter.status.error}" />
                                     <core:Item key="I" text="{i18n>filter.status.information}" />
@@ -81,7 +81,7 @@
                             label="{i18n>filter.plannedStartDate}"
                             groupName="Group1">
                             <fb:control>
-                                <DatePicker id="plannedStartDate" change=".onDateChange"
+                                <DatePicker id="plannedStartDate" change=".onFilterChange" 
                                     placeholder="{i18n>filter.datePlaceholder}" />
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -89,14 +89,14 @@
                             label="{i18n>filter.plannedEndDate}"
                             groupName="Group1">
                             <fb:control>
-                                <DatePicker id="plannedEndDate" change=".onDateChange"
+                                <DatePicker id="plannedEndDate" change=".onFilterChange"
                                     placeholder="{i18n>filter.datePlaceholder}" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="milestone" label="{i18n>filter.milestone}"
                             groupName="Group1">
                             <fb:control>
-                                <Select id="selectMilestone" change=".onMilestoneChange">
+                                <Select id="selectMilestone" change=".onFilterChange">
                                     <core:Item key="" text="{i18n>filter.milestone.all}" />
                                     <core:Item key="P" text="{i18n>filter.milestone.mainmilestone}" />
                                     <core:Item key="M"
@@ -110,11 +110,12 @@
         </f:header>
         <f:content>
             <FlexBox direction="Column" fitContainer="true">
-                <OverflowToolbar >
+                <OverflowToolbar>
                     <SegmentedButton
                         id="tabSwitch"
                         selectedKey="{viewModel>/currentTab}"
                         selectionChange="onTabSwitch"
+                        class="sapUiTinyMargin"
                     >
                         <items>
                             <SegmentedButtonItem key="schedule" text="Schedule" />
@@ -131,8 +132,9 @@
                         tooltip="{i18n>button.selectFile}"
                         style="Emphasized"
                         buttonText="{i18n>button.selectFile}"
-                        class="sapUiSmallMarginStart"
+                        class="sapUiSmallMargin"
                         typeMissmatch="handleTypeMissmatch"
+                        
                     />
                     <ToolbarSpacer />
                     <Button
@@ -142,11 +144,13 @@
                         icon="sap-icon://excel-attachment"
                         press=".onExcelTemplateFileExport"
                         tooltip="{i18n>button.exampleFileDownload.tooltip}"
+                        class="sapUiTinyMargin"
                     />
                     <SegmentedButton
                         id="viewSwitch"
                         selectedKey="{viewModel>/currentView}"
                         selectionChange="onViewSwitch"
+                        class="sapUiTinyMargin"
                     >
                         <items>
                             <SegmentedButtonItem key="more" icon="sap-icon://detail-more"
