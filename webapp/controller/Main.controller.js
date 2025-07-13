@@ -248,7 +248,7 @@ sap.ui.define([
                     oEntry.dontCreate = hasInvalidDate;
                     oEntry[this.TsFields.STATUS] = hasInvalidDate ? "E" : "P";
                     oEntry[this.TsFields.STATUS_MESSAGE] = hasInvalidDate
-                        ? this.i18n().getText("status.invalidDateFormat")
+                        ? this.i18n().getText("status.entry.invalidDate")
                         : this.i18n().getText("status.entry.pending");
 
                     return oEntry;
@@ -564,7 +564,7 @@ sap.ui.define([
                 const sPrefix = sPrefixMatch ? sPrefixMatch[0] : "";
                 if (!sPrefix) {
                     oRow[this.TsFields.STATUS] = "E";
-                    oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("entry.milestoneWrongPrefix", ["Invalid milestone prefix format (e.g., MS 01:)"]);
+                    oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("entry.milestoneWrongPrefix");
                     return;
                 }
 
