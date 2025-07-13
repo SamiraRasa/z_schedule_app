@@ -74,8 +74,8 @@ sap.ui.define([
                 { label: mandatoryFields.includes(ScheduleFields.PLANNED_END_DATE) ? i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE) + " *" : i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE), key: ScheduleFields.PLANNED_END_DATE, width: 18 },
                 { label: i18n.getText("table.header." + ScheduleFields.BASELINE_START_DATE), key: ScheduleFields.BASELINE_START_DATE, width: 18 },
                 { label: i18n.getText("table.header." + ScheduleFields.BASELINE_END_DATE), key: ScheduleFields.BASELINE_END_DATE, width: 18 },
-                { label: i18n.getText("table.header." + ScheduleFields.MILESTONE), key: ScheduleFields.MILESTONE, width: 15 },
-                { label: i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME), key: ScheduleFields.MILESTONE_NAME, width: 20 },
+                { label: mandatoryFields.includes(ScheduleFields.MILESTONE) ? i18n.getText("table.header." + ScheduleFields.MILESTONE)+ " *" : i18n.getText("table.header." + ScheduleFields.MILESTONE), key: ScheduleFields.MILESTONE, width: 15 },
+                { label: mandatoryFields.includes(ScheduleFields.MILESTONE_NAME) ? i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME)+ " *" : i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME), key: ScheduleFields.MILESTONE_NAME, width: 20 },
                 { label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION), key: ScheduleFields.DESCRIPTION, width: 25 }
             ];
         },

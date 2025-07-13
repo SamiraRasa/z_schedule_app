@@ -46,7 +46,7 @@ sap.ui.define([
             XLSX.writeFile(wb, "Schedule_Template.xlsx");
 
         },
-
+      
         handleTypeMissmatch: function (oEvent) {
             const oResourceBundle = this.getView().getModel("i18n").getResourceBundle();
             const aFileTypes = oEvent.getSource().getFileType();
@@ -270,7 +270,8 @@ sap.ui.define([
                 if (milestoneValue && milestoneValue !== 'P' && milestoneValue !== 'M') {
                     oExcelRow[this.TsFields.STATUS] = "E";
                     oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]);
-                    return oExcelRow;
+                    oExcelRow.dontCreate = true;
+                    return;
                 }
 
                 // Pflichtfelder prüfen
@@ -283,14 +284,12 @@ sap.ui.define([
                     return;
                 }
 
-
                 const dateFields = [
                     this.TsFields.PLANNED_START_DATE,
                     this.TsFields.PLANNED_END_DATE,
                     this.TsFields.BASELINE_START_DATE,
                     this.TsFields.BASELINE_END_DATE
                 ];
-
 
                 dateFields.forEach(field => {
                     const dateValue = oExcelRow[field];

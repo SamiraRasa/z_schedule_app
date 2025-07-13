@@ -161,8 +161,8 @@
                     id="moreDetailTable"
                     items="{/scheduleData}"
                     growing="true"
-                    growingThreshold="10"
-                    growingScrollToLoad="true"
+                    growingThreshold="5"
+                    
                     sticky="ColumnHeaders,HeaderToolbar"
                     visible="{= ${viewModel>/currentView} === 'more'}"
                     noDataText="{i18n>tableNoDataText}"
