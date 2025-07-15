@@ -54,7 +54,7 @@ sap.ui.define([
          * @returns {Array} Array von Objekten mit key und propertyKey
          */
 
-        
+
         getMandatoryFields: function (bIsMilestone, isPoC) {
             if (isPoC) {
                 return [ScheduleFields.PROJECT_ID, ScheduleFields.WBS_ID, ScheduleFields.POC];
@@ -74,8 +74,8 @@ sap.ui.define([
                 { label: mandatoryFields.includes(ScheduleFields.PLANNED_END_DATE) ? i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE) + " *" : i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE), key: ScheduleFields.PLANNED_END_DATE, width: 18 },
                 { label: i18n.getText("table.header." + ScheduleFields.BASELINE_START_DATE), key: ScheduleFields.BASELINE_START_DATE, width: 18 },
                 { label: i18n.getText("table.header." + ScheduleFields.BASELINE_END_DATE), key: ScheduleFields.BASELINE_END_DATE, width: 18 },
-                { label: mandatoryFields.includes(ScheduleFields.MILESTONE) ? i18n.getText("table.header." + ScheduleFields.MILESTONE)+ " *" : i18n.getText("table.header." + ScheduleFields.MILESTONE), key: ScheduleFields.MILESTONE, width: 15 },
-                { label: mandatoryFields.includes(ScheduleFields.MILESTONE_NAME) ? i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME)+ " *" : i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME), key: ScheduleFields.MILESTONE_NAME, width: 20 },
+                { label: mandatoryFields.includes(ScheduleFields.MILESTONE) ? i18n.getText("table.header." + ScheduleFields.MILESTONE) + " *" : i18n.getText("table.header." + ScheduleFields.MILESTONE), key: ScheduleFields.MILESTONE, width: 15 },
+                { label: mandatoryFields.includes(ScheduleFields.MILESTONE_NAME) ? i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME) + " *" : i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME), key: ScheduleFields.MILESTONE_NAME, width: 20 },
                 { label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION), key: ScheduleFields.DESCRIPTION, width: 25 }
             ];
         },
@@ -85,7 +85,8 @@ sap.ui.define([
             return [
                 { label: mandatoryFields.includes(ScheduleFields.PROJECT_ID) ? i18n.getText("table.header." + ScheduleFields.PROJECT_ID) + " *" : i18n.getText("table.header." + ScheduleFields.PROJECT_ID), key: ScheduleFields.PROJECT_ID, width: 15 },
                 { label: mandatoryFields.includes(ScheduleFields.WBS_ID) ? i18n.getText("table.header." + ScheduleFields.WBS_ID) + " *" : i18n.getText("table.header." + ScheduleFields.WBS_ID), key: ScheduleFields.WBS_ID, width: 18 },
-                { label: mandatoryFields.includes(ScheduleFields.POC) ? i18n.getText("table.header." + ScheduleFields.POC) + " *" : i18n.getText("table.header." + ScheduleFields.POC), key: ScheduleFields.POC, width: 15 }
+                { label: mandatoryFields.includes(ScheduleFields.POC) ? i18n.getText("table.header." + ScheduleFields.POC) + " *" : i18n.getText("table.header." + ScheduleFields.POC), key: ScheduleFields.POC, width: 15 },
+                { label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION), key: ScheduleFields.DESCRIPTION, width: 25 }
             ];
         },
 
@@ -108,7 +109,8 @@ sap.ui.define([
             return [
                 i18n.getText("template.column.example." + ScheduleFields.PROJECT_ID),
                 i18n.getText("template.column.example." + ScheduleFields.WBS_ID),
-                i18n.getText("template.column.example." + ScheduleFields.POC)
+                i18n.getText("template.column.example." + ScheduleFields.POC),
+                i18n.getText("template.column.example." + ScheduleFields.DESCRIPTION),
             ];
 
         },

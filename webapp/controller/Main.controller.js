@@ -20,7 +20,7 @@ sap.ui.define([
             this.getView().setModel(new sap.ui.model.json.JSONModel({
                 currentTab: "schedule",
                 currentView: "less",
-                viewSwitchEnabled: true
+
             }), "viewModel");
         },
 
@@ -75,7 +75,7 @@ sap.ui.define([
 
             const oFile = oEvent.getParameter("files")?.[0];
             if (!oFile || !window.FileReader) {
-                MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
+                // MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
                 return;
             }
 
@@ -117,6 +117,7 @@ sap.ui.define([
                     this.TsFields.PROJECT_ID,
                     this.TsFields.WBS_ID,
                     this.TsFields.POC,
+                     this.TsFields.DESCRIPTION
                 ];
 
                 const aScheduleEntries = [];
@@ -200,10 +201,9 @@ sap.ui.define([
                         oEntry[fieldKey] = row[i];
                     });
 
-
                     const milestoneValue = oEntry[this.TsFields.MILESTONE]?.trim();
                     if (milestoneValue) {
-                        debugger;
+
                         if (milestoneValue !== 'P' && milestoneValue !== 'M') {
                             oEntry[this.TsFields.STATUS] = "E";
                             oEntry[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]);
@@ -749,7 +749,7 @@ sap.ui.define([
                 existingEntries: [],
                 currentView: "less",
                 currentTab: "schedule",
-                viewSwitchEnabled: true
+
             }));
         },
 
@@ -791,18 +791,23 @@ sap.ui.define([
                 var oTableSchedule = this.byId("idscheduleTable");
                 var oTableMore = this.byId("moreDetailTable");
                 if (sCurrentView === "less" && oTableSchedule?.getBinding("items")) {
-                    oTableSchedule.getBinding("items").filter(aScheduleFilters);
+                    oTableSchedule.getBinding("items").filter(aFilters);
                 }
                 if (sCurrentView === "more" && oTableMore?.getBinding("items")) {
-                    oTableMore.getBinding("items").filter(aScheduleFilters);
+                    oTableMore.getBinding("items").filter(aFilters);
+                }
+            } else if (sCurrentTab === "poc") {
+                var oTablePocLess = this.byId("idscheduleTablePoc");
+                var oTablePocMore = this.byId("moreDetailPocTable");
+                if (sCurrentView === "less" && oTablePocLess?.getBinding("items")) {
+                    oTablePocLess.getBinding("items").filter(aFilters);
+                }
+                if (sCurrentView === "more" && oTablePocMore?.getBinding("items")) {
+                    oTablePocMore.getBinding("items").filter(aFilters);
                 }
             }
-
-            var oTablePoc = this.byId("idscheduleTablePoc");
-            if (sCurrentTab === "poc" && oTablePoc?.getBinding("items")) {
-                oTablePoc.getBinding("items").filter(aFilters);
-            }
         },
+
         onFilterBarClear: function () {
             this.byId("inputProjectId").setValue("");
             this.byId("inputWbsId").setValue("");
@@ -813,43 +818,35 @@ sap.ui.define([
 
             var oTableSchedule = this.byId("moreDetailTable") || this.byId("idscheduleTable");
             var oBindingSchedule = oTableSchedule.getBinding("items");
-                if (oBindingSchedule) {
-                    oBindingSchedule.filter([]);
-                
-                }
+            if (oBindingSchedule) {
+                oBindingSchedule.filter([]);
+
+            }
             var oTablePoc = this.byId("idscheduleTablePoc");
             var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
-                if (oBindingPoc) {
-                    oBindingPoc.filter([]);
-                
-                    }
-            
-            },
-
-            onFilterChange: function () {
-                this.onSearch();
-            },
-
-            onViewSwitch: function (oEvent) {
-                var sKey = oEvent.getParameter("key");
-                this.getViewModel().setProperty("/currentView", sKey);
-                this.onSearch();
-            },
-
-            onTabSwitch: function (oEvent) {
-                var sKey = oEvent.getParameter("key");
-                var oViewModel = this.getView().getModel("viewModel");
-                oViewModel.setProperty("/currentTab", sKey);
-                
-                if (sKey === "poc") {
-                    oViewModel.setProperty("/viewSwitchEnabled", false);
-                    oViewModel.setProperty("/currentView", "less");
-                    
-                } else {
-                    oViewModel.setProperty("/viewSwitchEnabled", true);
-                    
-                }
-                this.onSearch();
+            if (oBindingPoc) {
+                oBindingPoc.filter([]);
             }
-        });
+        },
+
+        onFilterChange: function () {
+            this.onSearch();
+        },
+
+        onViewSwitch: function (oEvent) {
+            var sKey = oEvent.getParameter("key");
+            this.getViewModel().setProperty("/currentView", sKey);
+            this.getViewModel().refresh(true);
+            this.onSearch();
+        },
+
+        onTabSwitch: function (oEvent) {
+            var sKey = oEvent.getParameter("key");
+            var oViewModel = this.getView().getModel("viewModel");
+            oViewModel.setProperty("/currentTab", sKey);
+            oViewModel.refresh(true);
+            this.onSearch();
+
+        }
+    });
 });

@@ -14,7 +14,8 @@
 >
     <f:DynamicPage
         id="dynamicPageId"
-        toggleHeaderOnTitleClick="true">
+        toggleHeaderOnTitleClick="true"
+        headerPinned="true">
         <f:title>
             <f:DynamicPageTitle>
                 <f:heading>
@@ -52,14 +53,16 @@
                             visibleInFilterBar="true"
                             groupName="Group1">
                             <fb:control>
-                                <Input id="inputProjectId" submit=".onSearch" liveChange=".onFilterChange"
+                                <Input id="inputProjectId" submit=".onSearch"
+                                    liveChange=".onFilterChange"
                                     showClearIcon="true" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="wbsId" label="{i18n>filter.wbsId}"
                             groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <Input id="inputWbsId" submit=".onSearch" liveChange=".onFilterChange"
+                                <Input id="inputWbsId" submit=".onSearch"
+                                    liveChange=".onFilterChange"
                                     showClearIcon="true" />
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -71,7 +74,7 @@
                                     <core:Item key="S" text="{i18n>filter.status.success}" />
                                     <core:Item key="E" text="{i18n>filter.status.error}" />
                                     <core:Item key="I" text="{i18n>filter.status.information}" />
-                                   
+
 
                                 </MultiComboBox>
                             </fb:control>
@@ -80,7 +83,7 @@
                             label="{i18n>filter.plannedStartDate}"
                             groupName="Group1">
                             <fb:control>
-                                <DatePicker id="plannedStartDate" change=".onFilterChange" 
+                                <DatePicker id="plannedStartDate" change=".onFilterChange"
                                     placeholder="{i18n>filter.datePlaceholder}" />
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -134,7 +137,6 @@
                         buttonText="{i18n>button.selectFile}"
                         class="sapUiSmallMargin"
                         typeMissmatch="handleTypeMissmatch"
-                        
                     />
                     <ToolbarSpacer />
                     <Button
@@ -166,9 +168,8 @@
                     items="{/scheduleData}"
                     growing="true"
                     growingThreshold="5"
-                    
                     sticky="ColumnHeaders,HeaderToolbar"
-                    visible="{= ${viewModel>/currentView} === 'more'}"
+                    visible="{= ${viewModel>/currentTab} === 'schedule' &amp;&amp; ${viewModel>/currentView} === 'more' }"
                     noDataText="{i18n>tableNoDataText}"
                 >
                     <columns>
@@ -192,7 +193,7 @@
                         <ColumnListItem>
                             <cells>
                                 <!-- Projektinfos -->
-                                <VBox >
+                                <VBox>
                                     <Label text="{i18n>table.header.projectId}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus text="{= ${projectId} ? ${projectId} : '-' }"
@@ -201,10 +202,10 @@
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus text="{= ${wbsId} ? ${wbsId} : '-' }"
                                         state="Information" />
-                                 
+
                                 </VBox>
                                 <!-- Planned Dates -->
-                                <VBox >
+                                <VBox>
                                     <Label text="{i18n>table.header.plannedStartDate}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text
@@ -214,10 +215,10 @@
                                         class="sapUiTinyMarginBottom" />
                                     <Text
                                         text="{= ${plannedEndDate} ? ${path: 'plannedEndDate', formatter: '.formatter.formatDate'} : '-' }"
-                                        />
+                                    />
                                 </VBox>
                                 <!-- Baseline Dates -->
-                                <VBox >
+                                <VBox>
                                     <Label text="{i18n>table.header.baselineStartDate}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text
@@ -227,10 +228,10 @@
                                         class="sapUiTinyMarginBottom" />
                                     <Text
                                         text="{= ${baselineEndDate} ? ${path: 'baselineEndDate', formatter: '.formatter.formatDate'} : '-' }"
-                                        />
+                                    />
                                 </VBox>
                                 <!-- Milestone -->
-                                <VBox >
+                                <VBox>
                                     <Label text="{i18n>table.header.milestoneName}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus
@@ -242,7 +243,7 @@
                                         state="Information" />
                                 </VBox>
                                 <!-- Status -->
-                                <VBox >
+                                <VBox>
                                     <ObjectStatus
                                         text="{path: 'status', formatter: '.formatter.formatStatusText'}"
                                         icon="{path: 'status', formatter: '.formatter.formatStatusIcon'}"
@@ -256,7 +257,7 @@
                                     <Label text="{i18n>table.header.description}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text text="{= ${description} ? ${description} : '-' }"
-                                       />
+                                    />
                                 </VBox>
                             </cells>
                         </ColumnListItem>
@@ -276,15 +277,15 @@
                 >
                     <columns>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
-                            >
+                        >
                             <Text text="{i18n>table.header.projectId}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
-                          >
+                        >
                             <Text text="{i18n>table.header.wbsId}" />
                         </Column>
                         <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Inline"
-                          >
+                        >
                             <Text text="{i18n>table.header.plannedStartDate}" />
                         </Column>
                         <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Inline"
@@ -299,7 +300,7 @@
                         >
                             <Text text="{i18n>table.header.baselineEndDate}" />
                         </Column>
-                        
+
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
                         >
                             <Text text="{i18n>table.header.milestone}" />
@@ -334,7 +335,7 @@
                                     text="{path: 'baselineStartDate', formatter: '.formatter.formatDate'}" />
                                 <Text
                                     text="{path: 'baselineEndDate', formatter: '.formatter.formatDate'}" />
-                                
+
                                 <Text text="{milestone}" />
                                 <Text text="{milestoneName}" />
                                 <ObjectStatus
@@ -348,6 +349,73 @@
                         </ColumnListItem>
                     </items>
                 </Table>
+                <!--More
+                Detail View : Sichtbarkeit Für PoC Tab-->
+                <Table
+                    id="moreDetailPocTable"
+                    items="{/pocData}"
+                    growing="true"
+                    growingThreshold="5"
+                    sticky="ColumnHeaders,HeaderToolbar"
+                    visible="{= ${viewModel>/currentTab} === 'poc' &amp;&amp; ${viewModel>/currentView} === 'more'}"
+                    noDataText="{i18n>tableNoDataText}"
+                >
+                    <columns>
+                        <Column minScreenWidth="Tablet" demandPopin="true">
+                            <Text text="{i18n>table.header.projectInfo}" />
+                        </Column>
+                        <Column minScreenWidth="Tablet" demandPopin="true">
+                            <Text text="{i18n>table.header.poc}" />
+                        </Column>
+                        <Column minScreenWidth="Tablet" demandPopin="true">
+                            <Text text="{i18n>table.header.status}" />
+                        </Column>
+                        <Column minScreenWidth="Tablet" demandPopin="true">
+                            <Text text="{i18n>table.header.description}" />
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <!-- Projektinfos -->
+                                <VBox>
+                                    <Label text="{i18n>table.header.projectId}"
+                                        class="sapUiTinyMarginBottom" />
+                                    <ObjectStatus text="{= ${projectId} ? ${projectId} : '-' }"
+                                        state="Information" class="sapUiTinyMarginBottom" />
+                                    <Label text="{i18n>table.header.wbsId}"
+                                        class="sapUiTinyMarginBottom" />
+                                    <ObjectStatus text="{= ${wbsId} ? ${wbsId} : '-' }"
+                                        state="Information" />
+                                </VBox>
+                                <VBox>
+                                    <Label text="{i18n>table.header.poc}"
+                                        class="sapUiTinyMarginBottom" />
+                                    <ObjectNumber number="{= ${poc} ? ${poc} : '-' }"
+                                        state="Information" />
+                                </VBox>
+                                <!-- Status -->
+                                <VBox>
+                                    <ObjectStatus
+                                        text="{path: 'status', formatter: '.formatter.formatStatusText'}"
+                                        icon="{path: 'status', formatter: '.formatter.formatStatusIcon'}"
+                                        state="{path: 'status', formatter: '.formatter.formatStatusState'}"
+                                        class="sapUiTinyMarginBottom"
+                                    />
+                                    <Label text="{i18n>table.header.statusMessage}"
+                                        class="sapUiTinyMarginBottom" />
+                                    <Text text="{= ${statusMessage} ? ${statusMessage} : '-' }"
+                                        class="sapUiTinyMarginBottom" />
+                                </VBox>
+                                <VBox>
+                                    <Label text="{i18n>table.header.description}"
+                                        class="sapUiTinyMarginBottom" />
+                                    <Text text="{= ${description} ? ${description} : '-' }" />
+                                </VBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
                 <!-- Less Detail View: Sichtbarkeit für PoC-Tab -->
                 <Table
                     id="idscheduleTablePoc"
@@ -357,16 +425,16 @@
                     growingScrollToLoad="true"
                     sticky="ColumnHeaders,HeaderToolbar"
                     visible="{= ${viewModel>/currentTab} === 'poc' &amp;&amp; ${viewModel>/currentView} === 'less'}"
+                    noDataText="{i18n>tableNoDataText}"
                     width="100%"
-                    
                 >
                     <columns>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
-                            >
+                        >
                             <Text text="{i18n>table.header.projectId}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
-                            >
+                        >
                             <Text text="{i18n>table.header.wbsId}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
@@ -381,6 +449,10 @@
                         >
                             <Text text="{i18n>table.header.statusMessage}" />
                         </Column>
+                        <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Inline"
+                        >
+                            <Text text="{i18n>table.header.description}" />
+                        </Column>
                     </columns>
                     <items>
                         <ColumnListItem>
@@ -394,6 +466,7 @@
                                     state="{path: 'status', formatter: '.formatter.formatStatusState'}"
                                 />
                                 <Text text="{statusMessage}" />
+                                <Text text="{description}" />
                             </cells>
                         </ColumnListItem>
                     </items>

@@ -4,7 +4,7 @@
     "generatorPlatform": "SAP Business Application Studio",
     "serviceType": "OData Url",
     "metadataFilename": "",
-    "serviceUrl": "https://my419285-api.s4hana.cloud.sap/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002",
+    "serviceUrl": "https://my421388-api.s4hana.cloud.sap/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002",
     "appName": "schedule_upload",
     "appTitle": "Schedule Upload ",
     "appDescription": "Schedule Excel Upload  ",
