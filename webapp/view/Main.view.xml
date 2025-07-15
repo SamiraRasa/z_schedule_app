@@ -71,8 +71,7 @@
                                     <core:Item key="S" text="{i18n>filter.status.success}" />
                                     <core:Item key="E" text="{i18n>filter.status.error}" />
                                     <core:Item key="I" text="{i18n>filter.status.information}" />
-                                    <core:Item key="W" text="{i18n>filter.status.warning}" />
-                                    <core:Item key="C" text="{i18n>filter.status.critical}" />
+                                   
 
                                 </MultiComboBox>
                             </fb:control>

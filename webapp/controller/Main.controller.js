@@ -19,7 +19,8 @@ sap.ui.define([
             this._reset();
             this.getView().setModel(new sap.ui.model.json.JSONModel({
                 currentTab: "schedule",
-                currentView: "less"
+                currentView: "less",
+                viewSwitchEnabled: true
             }), "viewModel");
         },
 
@@ -599,7 +600,7 @@ sap.ui.define([
                             }
                         });
                     });
-                    MessageToast.show(this.i18n().getText("status.milestone.alreadyExists", [sMilestoneName]));
+                    // MessageToast.show(this.i18n().getText("status.milestone.alreadyExists", [sMilestoneName]));
                 } else {
                     const oPayload = {
                         ProjectElementDescription: sMilestoneName,
@@ -747,11 +748,10 @@ sap.ui.define([
                 allEntriesEndDate: null,
                 existingEntries: [],
                 currentView: "less",
-                currentTab: "schedule"
+                currentTab: "schedule",
+                viewSwitchEnabled: true
             }));
         },
-
-
 
         onSearch: function (oEvent) {
             var aFilters = [];
@@ -813,16 +813,16 @@ sap.ui.define([
 
             var oTableSchedule = this.byId("moreDetailTable") || this.byId("idscheduleTable");
             var oBindingSchedule = oTableSchedule.getBinding("items");
-            if (oBindingSchedule) {
-                oBindingSchedule.filter([]);
-             
-            }
+                if (oBindingSchedule) {
+                    oBindingSchedule.filter([]);
+                
+                }
             var oTablePoc = this.byId("idscheduleTablePoc");
             var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
-            if (oBindingPoc) {
-                oBindingPoc.filter([]);
-               
-            }
+                if (oBindingPoc) {
+                    oBindingPoc.filter([]);
+                
+                    }
             
             },
 
@@ -840,6 +840,16 @@ sap.ui.define([
                 var sKey = oEvent.getParameter("key");
                 var oViewModel = this.getView().getModel("viewModel");
                 oViewModel.setProperty("/currentTab", sKey);
-            },
+                
+                if (sKey === "poc") {
+                    oViewModel.setProperty("/viewSwitchEnabled", false);
+                    oViewModel.setProperty("/currentView", "less");
+                    
+                } else {
+                    oViewModel.setProperty("/viewSwitchEnabled", true);
+                    
+                }
+                this.onSearch();
+            }
         });
 });
