@@ -130,6 +130,7 @@
                         change="onFileChange"
                         tooltip="{i18n>button.selectFile}"
                         style="Emphasized"
+                        buttonOnly="true"
                         buttonText="{i18n>button.selectFile}"
                         class="sapUiSmallMargin"
                         typeMissmatch="handleTypeMissmatch"
