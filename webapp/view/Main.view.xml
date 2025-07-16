@@ -20,7 +20,7 @@
             <f:DynamicPageTitle>
                 <f:heading>
                     <Title
-                        text="{= ${/fileName} ? ${/fileName} : ${i18n>title} }"
+                        text="{i18n>title}"
                         level="H4"
                     />
                 </f:heading>
