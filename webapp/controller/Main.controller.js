@@ -26,7 +26,7 @@ sap.ui.define([
 
         onExcelTemplateFileExport: function () {
             const oI18n = this.i18n();
-            const aScheduleColumnsConfig = FieldDefinitions.getScheduleTemplateColumnConfig(oI18n, true);
+            const aScheduleColumnsConfig = FieldDefinitions.getScheduleTemplateColumnConfig(oI18n);
             const aScheduleColumns = aScheduleColumnsConfig.map(col => col.label);
             const aScheduleExampleRow = FieldDefinitions.getScheduleTemplateExampleRow(oI18n);
 
