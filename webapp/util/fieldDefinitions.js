@@ -65,8 +65,8 @@ sap.ui.define([
             }
         },
 
-        getScheduleTemplateColumnConfig: function (i18n) {
-            const mandatoryFields = this.getMandatoryFields(false);
+        getScheduleTemplateColumnConfig: function (i18n, bIsMilestone) {
+            const mandatoryFields = this.getMandatoryFields(!!bIsMilestone);
             return [
                 { label: mandatoryFields.includes(ScheduleFields.PROJECT_ID) ? i18n.getText("table.header." + ScheduleFields.PROJECT_ID) + " *" : i18n.getText("table.header." + ScheduleFields.PROJECT_ID), key: ScheduleFields.PROJECT_ID, width: 15 },
                 { label: mandatoryFields.includes(ScheduleFields.WBS_ID) ? i18n.getText("table.header." + ScheduleFields.WBS_ID) + " *" : i18n.getText("table.header." + ScheduleFields.WBS_ID), key: ScheduleFields.WBS_ID, width: 18 },
