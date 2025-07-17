@@ -76,7 +76,8 @@ sap.ui.define([
             const oFile = oEvent.getParameter("files")?.[0];
             if (!oFile || !window.FileReader) {
                 // MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
-                return;
+                 throw new Error(this.i18n().getText("error.fileApiNotSupported"))
+                // return;
             }
 
             try {
@@ -219,6 +220,7 @@ sap.ui.define([
                     }
                     let hasInvalidDate = false;
                     aDateFields.forEach(sDateKey => {
+                        debugger
                         const rawDate = oEntry[sDateKey];
                         if (rawDate) {
                             if (typeof rawDate === 'number') {
@@ -266,6 +268,9 @@ sap.ui.define([
 
             aScheduleData.forEach(oExcelRow => {
                 const aValidationErrors = [];
+                if (oExcelRow.dontCreate) {
+                    return;
+                }
 
                 const milestoneValue = oExcelRow[this.TsFields.MILESTONE]?.trim();
                 if (milestoneValue && milestoneValue !== 'P' && milestoneValue !== 'M') {

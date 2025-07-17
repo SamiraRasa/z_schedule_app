@@ -214,7 +214,8 @@
                                     <Label text="{i18n>table.header.plannedEndDate}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text
-                                        text="{= ${plannedEndDate} ? ${path: 'plannedEndDate', formatter: '.formatter.formatDate'} : '-' }"
+                                        text="{= ${plannedEndDate} ? ${plannedEndDate', formatter: '.formatter.formatDate'} : '-' }"
+                                        
                                     />
                                 </VBox>
                                 <!-- Baseline Dates -->
