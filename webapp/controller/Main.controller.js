@@ -76,7 +76,8 @@ sap.ui.define([
             const oFile = oEvent.getParameter("files")?.[0];
             if (!oFile || !window.FileReader) {
                 // MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
-                return;
+                 throw new Error(this.i18n().getText("error.fileApiNotSupported"))
+                // return;
             }
 
             try {
@@ -219,6 +220,7 @@ sap.ui.define([
                     }
                     let hasInvalidDate = false;
                     aDateFields.forEach(sDateKey => {
+                      
                         const rawDate = oEntry[sDateKey];
                         if (rawDate) {
                             if (typeof rawDate === 'number') {
@@ -266,6 +268,9 @@ sap.ui.define([
 
             aScheduleData.forEach(oExcelRow => {
                 const aValidationErrors = [];
+                if (oExcelRow.dontCreate) {
+                    return;
+                }
 
                 const milestoneValue = oExcelRow[this.TsFields.MILESTONE]?.trim();
                 if (milestoneValue && milestoneValue !== 'P' && milestoneValue !== 'M') {
@@ -619,7 +624,7 @@ sap.ui.define([
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
-                                oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.milestoneCreationFailed");
+                                oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
                                 reject(oErr);
                             }
                         });
@@ -627,7 +632,7 @@ sap.ui.define([
                 }
             } catch (error) {
                 oRow[this.TsFields.STATUS] = error.status || "E";
-                oRow[this.TsFields.STATUS_MESSAGE] = error.messageBoxText || this.i18n().getText("status.milestone.failed");
+                oRow[this.TsFields.STATUS_MESSAGE] = error.messageBoxText || this.i18n().getText("status.entry.cantReadErrorTextResult");
             }
         },
 
@@ -640,38 +645,37 @@ sap.ui.define([
             const day = String(oDate.getUTCDate()).padStart(2, "0");
             return `${year}-${month}-${day}T00:00:00`;
         },
-
         _formatInputToDate: function (sDate) {
-            if (!sDate || typeof sDate !== 'string') return sDate;
-
-            const cleaned = sDate.trim();
+            if (!sDate || typeof sDate !== 'string') {
+                return null; 
+            }
+                    const cleaned = sDate.trim();
             const dateFormats = [
                 { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, day: 1, month: 2, year: 3 }, // DD.MM.YYYY, DD-MM-YYYY, DD/MM/YYYY
                 { regex: /^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/, day: 3, month: 2, year: 1 }, // YYYY.MM.DD, YYYY-MM-DD
-                { regex: /^(\d{8})$/, day: 6, month: 4, year: 0 } // YYYYMMDD
+                { regex: /^(\d{8})$/, day: 6, month: 4, year: 0 }, // YYYYMMDD
+                { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, day: 2, month: 1, year: 3 } // MM/DD/YYYY, MM-DD-YYYY
             ];
-
+        
             for (const format of dateFormats) {
                 const match = cleaned.match(format.regex);
                 if (match) {
                     const day = parseInt(match[format.day], 10);
-                    const month = parseInt(match[format.month], 10) - 1;
+                    const month = parseInt(match[format.month], 10) - 1;  
                     const year = parseInt(match[format.year], 10);
-
+        
                     if (year < 1980) {
-                        return sDate;
+                        return null; 
                     }
-
-                    const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
+                            const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
                     if (date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day) {
                         return date;
                     }
                 }
             }
-
-            return sDate;
-        },
-
+        
+            return null; 
+                },
 
         _formatExcelDate: function (excelDate) {
             if (typeof excelDate !== 'number' || isNaN(excelDate)) return excelDate;
@@ -836,16 +840,14 @@ sap.ui.define([
         onViewSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             this.getViewModel().setProperty("/currentView", sKey);
-            this.getViewModel().refresh(true);
-            this.onSearch();
+            
         },
 
         onTabSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             var oViewModel = this.getView().getModel("viewModel");
             oViewModel.setProperty("/currentTab", sKey);
-            oViewModel.refresh(true);
-            this.onSearch();
+           
 
         }
     });

@@ -23,12 +23,7 @@ sap.ui.define([], function () {
         //     return vDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
         // },
 
-        // formatPocNumber: function (value) {
-        //     if (value === null || value === undefined || isNaN(parseFloat(value))) {
-        //         return "";
-        //     }
-        //     return parseFloat(value).toFixed(3); 
-        // },
+       
 
         formatDate: function (vDate) {
             if (!vDate) return "";
