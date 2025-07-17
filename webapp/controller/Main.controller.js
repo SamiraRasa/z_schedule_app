@@ -774,14 +774,13 @@ sap.ui.define([
 
             var aScheduleFilters = [...aFilters];
             if (oPlannedStartDate) {
-                aFilters.push(new Filter("plannedStartDate", FilterOperator.GE, oPlannedStartDate));
+                aScheduleFilters.push(new Filter("plannedStartDate", FilterOperator.GE, oPlannedStartDate));
             }
             if (oPlannedEndDate) {
-                aFilters.push(new Filter("plannedEndDate", FilterOperator.LE, oPlannedEndDate));
+                aScheduleFilters.push(new Filter("plannedEndDate", FilterOperator.LE, oPlannedEndDate));
             }
             if (sMilestone && sMilestone !== "") {
-               
-                aFilters.push(new Filter("milestone", FilterOperator.EQ, sMilestone));
+                aScheduleFilters.push(new Filter("milestone", FilterOperator.EQ, sMilestone));
             }
 
             var oViewModel = this.getView().getModel("viewModel");

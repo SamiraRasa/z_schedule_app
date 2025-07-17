@@ -7,21 +7,21 @@ sap.ui.define([], function () {
          * @param {Date} vDate - Date object to format
          * @returns {string} - Das formatierte Datum im Format d.M.yyyy
          */
-        formatDate: function (vDate) {
-            if (!vDate) {
-                return "";
-            }
+        // formatDate: function (vDate) {
+        //     if (!vDate) {
+        //         return "";
+        //     }
 
-            const oDate = typeof vDate === "string" ? new Date(vDate) : vDate;
+        //     const oDate = typeof vDate === "string" ? new Date(vDate) : vDate;
 
-            if (oDate instanceof Date === false) {
-                return vDate;
-            }
-            if (isNaN(oDate.getTime())) {
-                return vDate; // Return original value if it's not a valid date
-            }
-            return vDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        },
+        //     if (oDate instanceof Date === false) {
+        //         return vDate;
+        //     }
+        //     if (isNaN(oDate.getTime())) {
+        //         return vDate; // Return original value if it's not a valid date
+        //     }
+        //     return vDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        // },
 
         // formatPocNumber: function (value) {
         //     if (value === null || value === undefined || isNaN(parseFloat(value))) {
@@ -30,12 +30,12 @@ sap.ui.define([], function () {
         //     return parseFloat(value).toFixed(3); 
         // },
 
-        // formatDate: function (vDate) {
-        //     if (!vDate) return "";
-        //     const oDate = typeof vDate === "string" ? new Date(vDate) : vDate;
-        //     if (!(oDate instanceof Date) || isNaN(oDate.getTime())) return vDate;
-        //     return oDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
-        // },
+        formatDate: function (vDate) {
+            if (!vDate) return "";
+            const oDate = typeof vDate === "string" ? new Date(vDate) : vDate;
+            if (!(oDate instanceof Date) || isNaN(oDate.getTime())) return vDate;
+            return oDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+        },
 
 
         /**
