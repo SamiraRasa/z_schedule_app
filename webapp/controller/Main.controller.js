@@ -815,28 +815,18 @@ sap.ui.define([
             this.byId("plannedStartDate").setValue(null);
             this.byId("plannedEndDate").setValue(null);
             this.byId("selectMilestone").setSelectedKey("");
-       
-            ["idscheduleTable", "moreDetailTable"].forEach(function(sTableId) {
-                var oTable = this.byId(sTableId);
-                if (oTable) {
-                    var oBinding = oTable.getBinding("items");
-                    if (oBinding) {
-                        oBinding.filter([]);
-                    }
-                }
-            }, this);
-            var aTableIds = ["idscheduleTablePoc", "moreDetailPocTable"];
-                aTableIds.forEach(function(sTableId) {
-                    var oTable = this.byId(sTableId);
-                    if (oTable) {
-                        var oBinding = oTable.getBinding("items");
-                        if (oBinding) {
-                            oBinding.filter([]);
-                        }
-                    }
-                }, this);
 
-          
+            var oTableSchedule = this.byId("moreDetailTable") || this.byId("idscheduleTable");
+            var oBindingSchedule = oTableSchedule.getBinding("items");
+            if (oBindingSchedule) {
+                oBindingSchedule.filter([]);
+
+            }
+            var oTablePoc = this.byId("idscheduleTablePoc");
+            var oBindingPoc = oTablePoc && oTablePoc.getBinding("items");
+            if (oBindingPoc) {
+                oBindingPoc.filter([]);
+            }
         },
 
         onFilterChange: function () {
@@ -846,16 +836,16 @@ sap.ui.define([
         onViewSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             this.getViewModel().setProperty("/currentView", sKey);
-            // this.getViewModel().refresh(true);
-            // this.onSearch();
+            this.getViewModel().refresh(true);
+            this.onSearch();
         },
 
         onTabSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             var oViewModel = this.getView().getModel("viewModel");
             oViewModel.setProperty("/currentTab", sKey);
-            // oViewModel.refresh(true);
-            // this.onSearch();
+            oViewModel.refresh(true);
+            this.onSearch();
 
         }
     });
