@@ -220,7 +220,7 @@ sap.ui.define([
                     }
                     let hasInvalidDate = false;
                     aDateFields.forEach(sDateKey => {
-                        debugger
+                      
                         const rawDate = oEntry[sDateKey];
                         if (rawDate) {
                             if (typeof rawDate === 'number') {
@@ -851,16 +851,14 @@ sap.ui.define([
         onViewSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             this.getViewModel().setProperty("/currentView", sKey);
-            // this.getViewModel().refresh(true);
-            // this.onSearch();
+            
         },
 
         onTabSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             var oViewModel = this.getView().getModel("viewModel");
             oViewModel.setProperty("/currentTab", sKey);
-            // oViewModel.refresh(true);
-            // this.onSearch();
+           
 
         }
     });
