@@ -50,8 +50,8 @@
                     filterContainerWidth="12rem">
                     <fb:filterGroupItems>
                         <fb:FilterGroupItem name="projectId" label="{i18n>filter.projectId}"
-                            visibleInFilterBar="true"
-                            groupName="Group1">
+                            groupName="Group1" visibleInFilterBar="true"
+                           >
                             <fb:control>
                                 <Input id="inputProjectId" submit=".onSearch"
                                     liveChange=".onFilterChange"
@@ -269,7 +269,7 @@
                     id="idscheduleTable"
                     items="{/scheduleData}"
                     growing="true"
-                    growingThreshold="10"
+                    growingThreshold="20"
                     growingScrollToLoad="true"
                     sticky="ColumnHeaders,HeaderToolbar"
                     visible="{= ${viewModel>/currentTab} === 'schedule' &amp;&amp; ${viewModel>/currentView} === 'less' }"
@@ -422,7 +422,7 @@
                     id="idscheduleTablePoc"
                     items="{/pocData}"
                     growing="true"
-                    growingThreshold="10"
+                    growingThreshold="20"
                     growingScrollToLoad="true"
                     sticky="ColumnHeaders,HeaderToolbar"
                     visible="{= ${viewModel>/currentTab} === 'poc' &amp;&amp; ${viewModel>/currentView} === 'less'}"

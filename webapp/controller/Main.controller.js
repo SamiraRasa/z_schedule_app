@@ -76,7 +76,7 @@ sap.ui.define([
             const oFile = oEvent.getParameter("files")?.[0];
             if (!oFile || !window.FileReader) {
                 // MessageBox.error(this.i18n().getText("error.fileApiNotSupported"));
-                 throw new Error(this.i18n().getText("error.fileApiNotSupported"))
+                throw new Error(this.i18n().getText("error.fileApiNotSupported"))
                 // return;
             }
 
@@ -118,7 +118,7 @@ sap.ui.define([
                     this.TsFields.PROJECT_ID,
                     this.TsFields.WBS_ID,
                     this.TsFields.POC,
-                     this.TsFields.DESCRIPTION
+                    this.TsFields.DESCRIPTION
                 ];
 
                 const aScheduleEntries = [];
@@ -220,7 +220,7 @@ sap.ui.define([
                     }
                     let hasInvalidDate = false;
                     aDateFields.forEach(sDateKey => {
-                      
+
                         const rawDate = oEntry[sDateKey];
                         if (rawDate) {
                             if (typeof rawDate === 'number') {
@@ -451,7 +451,6 @@ sap.ui.define([
 
         _updatePoC: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
-
             try {
                 const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID], false);
                 if (oUUIDs === null) {
@@ -460,7 +459,6 @@ sap.ui.define([
                         statusMessage: this.i18n().getText("status.entry.wbsNotFound", [oRow[this.TsFields.WBS_ID]])
                     };
                 }
-
                 const oPayload = {
                     YY1_PM_PoC_PTD: String(oRow[this.TsFields.POC])
                 };
@@ -647,51 +645,49 @@ sap.ui.define([
         },
         _formatInputToDate: function (sDate) {
             if (!sDate || typeof sDate !== 'string') {
-                return null; 
+                return null;
             }
-                    const cleaned = sDate.trim();
+            const cleaned = sDate.trim();
             const dateFormats = [
                 { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, day: 1, month: 2, year: 3 }, // DD.MM.YYYY, DD-MM-YYYY, DD/MM/YYYY
                 { regex: /^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/, day: 3, month: 2, year: 1 }, // YYYY.MM.DD, YYYY-MM-DD
                 { regex: /^(\d{8})$/, day: 6, month: 4, year: 0 }, // YYYYMMDD
                 { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, day: 2, month: 1, year: 3 } // MM/DD/YYYY, MM-DD-YYYY
             ];
-        
+
             for (const format of dateFormats) {
                 const match = cleaned.match(format.regex);
                 if (match) {
                     const day = parseInt(match[format.day], 10);
-                    const month = parseInt(match[format.month], 10) - 1;  
+                    const month = parseInt(match[format.month], 10) - 1;
                     const year = parseInt(match[format.year], 10);
-        
+
                     if (year < 1980) {
-                        return null; 
+                        return null;
                     }
-                            const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
+                    const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
                     if (date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day) {
                         return date;
                     }
                 }
             }
-        
-            return null; 
-                },
+
+            return null;
+        },
 
         _formatExcelDate: function (excelDate) {
-            if (typeof excelDate !== 'number' || isNaN(excelDate)) return excelDate;
+            if (typeof excelDate !== 'number' || isNaN(excelDate)) return null;
             try {
                 const dateObj = XLSX.SSF.parse_date_code(excelDate);
                 if (!dateObj || isNaN(dateObj.y) || isNaN(dateObj.m) || isNaN(dateObj.d)) {
-                    return excelDate;
+                    return null;
                 }
-                if (dateObj.y < 1980) {
-                    return excelDate;
-                }
+                if (dateObj.y < 1980) return null;
                 const date = new Date(Date.UTC(dateObj.y, dateObj.m - 1, dateObj.d));
-                return isNaN(date.getTime()) ? excelDate : date;
+                return isNaN(date.getTime()) ? null : date;
             } catch (e) {
                 console.error("Error parsing Excel date:", e);
-                return excelDate;
+                return null;
             }
         },
 
@@ -765,9 +761,10 @@ sap.ui.define([
             var oPlannedStartDate = this.byId("plannedStartDate").getDateValue();
             var oPlannedEndDate = this.byId("plannedEndDate").getDateValue();
             var sMilestone = this.byId("selectMilestone").getSelectedKey();
-
+  
+  
             if (sProjectId) {
-                aFilters.push(new Filter("projectId", FilterOperator.Contains, sProjectId.trim().toLowerCase(), false));
+                aFilters.push(new Filter("projectId", FilterOperator.EQ, sProjectId));
             }
             if (sWbsId) {
                 aFilters.push(new Filter("wbsId", FilterOperator.Contains, sWbsId));
@@ -784,7 +781,7 @@ sap.ui.define([
                 aFilters.push(new Filter("plannedEndDate", FilterOperator.LE, oPlannedEndDate));
             }
             if (sMilestone && sMilestone !== "") {
-               
+
                 aFilters.push(new Filter("milestone", FilterOperator.EQ, sMilestone));
             }
 
@@ -820,8 +817,8 @@ sap.ui.define([
             this.byId("plannedStartDate").setValue(null);
             this.byId("plannedEndDate").setValue(null);
             this.byId("selectMilestone").setSelectedKey("");
-       
-            ["idscheduleTable", "moreDetailTable"].forEach(function(sTableId) {
+
+            ["idscheduleTable", "moreDetailTable"].forEach(function (sTableId) {
                 var oTable = this.byId(sTableId);
                 if (oTable) {
                     var oBinding = oTable.getBinding("items");
@@ -831,17 +828,17 @@ sap.ui.define([
                 }
             }, this);
             var aTableIds = ["idscheduleTablePoc", "moreDetailPocTable"];
-                aTableIds.forEach(function(sTableId) {
-                    var oTable = this.byId(sTableId);
-                    if (oTable) {
-                        var oBinding = oTable.getBinding("items");
-                        if (oBinding) {
-                            oBinding.filter([]);
-                        }
+            aTableIds.forEach(function (sTableId) {
+                var oTable = this.byId(sTableId);
+                if (oTable) {
+                    var oBinding = oTable.getBinding("items");
+                    if (oBinding) {
+                        oBinding.filter([]);
                     }
-                }, this);
+                }
+            }, this);
 
-          
+
         },
 
         onFilterChange: function () {
@@ -851,14 +848,14 @@ sap.ui.define([
         onViewSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             this.getViewModel().setProperty("/currentView", sKey);
-            
+
         },
 
         onTabSwitch: function (oEvent) {
             var sKey = oEvent.getParameter("key");
             var oViewModel = this.getView().getModel("viewModel");
             oViewModel.setProperty("/currentTab", sKey);
-           
+
 
         }
     });
