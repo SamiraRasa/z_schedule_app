@@ -96,30 +96,10 @@ sap.ui.define([
                 if (!bHasSchedule && !bHasPoC) {
                     throw new Error(this.i18n().getText("error.notValidSheet"));
                 }
-                const aDateFields = [
-                    this.TsFields.PLANNED_START_DATE,
-                    this.TsFields.PLANNED_END_DATE,
-                    this.TsFields.BASELINE_START_DATE,
-                    this.TsFields.BASELINE_END_DATE,
-                ];
+                const aDateFields = FieldDefinitions.getDateFields();
 
-                const aFieldOrderSchedule = [
-                    this.TsFields.PROJECT_ID,
-                    this.TsFields.WBS_ID,
-                    this.TsFields.PLANNED_START_DATE,
-                    this.TsFields.PLANNED_END_DATE,
-                    this.TsFields.BASELINE_START_DATE,
-                    this.TsFields.BASELINE_END_DATE,
-                    this.TsFields.MILESTONE,
-                    this.TsFields.MILESTONE_NAME,
-                    this.TsFields.DESCRIPTION
-                ];
-                const aFieldOrderPoc = [
-                    this.TsFields.PROJECT_ID,
-                    this.TsFields.WBS_ID,
-                    this.TsFields.POC,
-                    this.TsFields.DESCRIPTION
-                ];
+                const aFieldOrderSchedule = FieldDefinitions.getFieldOrder(false);
+                const aFieldOrderPoc = FieldDefinitions.getFieldOrder(true);
 
                 const aScheduleEntries = [];
                 const aPocEntries = [];
@@ -270,120 +250,62 @@ sap.ui.define([
             const aScheduleData = oViewModel.getProperty("/scheduleData") || [];
             const aPocData = oViewModel.getProperty("/pocData") || [];
 
-            const MIN_DATE = new Date(Date.UTC(1980, 0, 1));
+            aScheduleData.forEach(row => {
+                if (row.dontCreate) return;
 
-            aScheduleData.forEach(oExcelRow => {
-                const aValidationErrors = [];
-                if (oExcelRow.dontCreate) {
+                const milestoneValue = row[this.TsFields.MILESTONE]?.trim();
+                if (milestoneValue && !['P', 'M'].includes(milestoneValue)) {
+                    this._setErrorStatus(row, this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]));
                     return;
                 }
 
-                const milestoneValue = oExcelRow[this.TsFields.MILESTONE]?.trim();
-                if (milestoneValue && milestoneValue !== 'P' && milestoneValue !== 'M') {
-                    oExcelRow[this.TsFields.STATUS] = "E";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.invalidMilestone", [milestoneValue]);
-                    oExcelRow.dontCreate = true;
+                const missing = this._validateMandatoryFields(row, ['P', 'M'].includes(milestoneValue));
+                if (missing.length > 0) {
+                    this._setErrorStatus(row, this.i18n().getText("status.entry.missingMandatoryFields", [missing.join(", ")]));
                     return;
                 }
 
-                // Pflichtfelder prüfen
-                const aMissingFields = this._validateMandatoryFields(oExcelRow, oExcelRow[this.TsFields.MILESTONE] === "P" || oExcelRow[this.TsFields.MILESTONE] === "M");
-                if (aMissingFields.length > 0) {
-                    const sFields = aMissingFields.join(", ");
-                    oExcelRow[this.TsFields.STATUS] = "E";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [sFields]);
-                    oExcelRow.dontCreate = true;
-                    return;
-                }
-
-                const dateFields = [
-                    this.TsFields.PLANNED_START_DATE,
-                    this.TsFields.PLANNED_END_DATE,
-                    this.TsFields.BASELINE_START_DATE,
-                    this.TsFields.BASELINE_END_DATE
+                let errors = [
+                    ...this._validateDates(row, [
+                        this.TsFields.PLANNED_START_DATE,
+                        this.TsFields.PLANNED_END_DATE,
+                        this.TsFields.BASELINE_START_DATE,
+                        this.TsFields.BASELINE_END_DATE
+                    ]),
+                    ...this._validateDateRange(row[this.TsFields.PLANNED_START_DATE], row[this.TsFields.PLANNED_END_DATE]),
+                    ...this._validateDateRange(row[this.TsFields.BASELINE_START_DATE], row[this.TsFields.BASELINE_END_DATE])
                 ];
 
-                dateFields.forEach(field => {
-                    const dateValue = oExcelRow[field];
-                    if (dateValue) {
-                        if (typeof dateValue === 'string' && !this._isValidDate(dateValue)) {
-                            aValidationErrors.push(this.i18n().getText("status.entry.invalidDate", [field, "DD.MM.YYYY"]));
-                        } else if (typeof dateValue === 'number' && !this._isValidExcelDate(dateValue)) {
-                            aValidationErrors.push(this.i18n().getText("status.entry.invalidDate", [field, "DD.MM.YYYY"]));
-                        } else if (dateValue instanceof Date && dateValue < MIN_DATE) {
-                            aValidationErrors.push(this.i18n().getText("status.entry.dateBefore1980", [field]));
-                        }
-                    }
-                });
-
-
-                const plannedStart = oExcelRow[this.TsFields.PLANNED_START_DATE];
-                const plannedEnd = oExcelRow[this.TsFields.PLANNED_END_DATE];
-                if (plannedStart && plannedEnd && plannedStart instanceof Date && plannedEnd instanceof Date) {
-                    if (plannedEnd < plannedStart) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStart"));
-                    }
-                }
-
-
-                const baselineStart = oExcelRow[this.TsFields.BASELINE_START_DATE];
-                const baselineEnd = oExcelRow[this.TsFields.BASELINE_END_DATE];
-                if (baselineStart && baselineEnd && baselineStart instanceof Date && baselineEnd instanceof Date) {
-                    if (baselineEnd < baselineStart) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.endBeforeStart"));
-                    }
-                }
-
-
-                if (aValidationErrors.length > 0) {
-                    oExcelRow.dontCreate = true;
-                    oExcelRow[this.TsFields.STATUS] = "E";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = aValidationErrors.join("\n");
+                if (errors.length > 0) {
+                    this._setErrorStatus(row, errors.join("\n"));
                 } else {
-                    oExcelRow[this.TsFields.STATUS] = "P";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pending");
+                    this._setPendingStatus(row);
                 }
             });
 
-            aPocData.forEach(oExcelRow => {
-                const aValidationErrors = [];
-                const aMissingFields = [this.TsFields.PROJECT_ID, this.TsFields.WBS_ID, this.TsFields.POC]
-                    .filter(fieldKey =>
-                        oExcelRow[fieldKey] === undefined ||
-                        oExcelRow[fieldKey] === null ||
-                        oExcelRow[fieldKey] === ""
-                    );
-                if (aMissingFields.length > 0) {
-                    const sFields = aMissingFields.map(field => this.TsFields[field] || field).join(", ");
-                    oExcelRow[this.TsFields.STATUS] = "E";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.missingMandatoryFields", [sFields]);
-                    oExcelRow.dontCreate = true;
+            aPocData.forEach(row => {
+                const missing = this._validateMandatoryFields(row, false, true);
+                if (missing.length > 0) {
+                    const sFields = missing.map(field => this.TsFields[field] || field).join(", ");
+                    this._setErrorStatus(row, this.i18n().getText("status.entry.missingMandatoryFields", [sFields]));
                     return;
                 }
 
-                const sPocValue = oExcelRow[this.TsFields.POC];
-                const normalizedPocValue = String(sPocValue).trim().replace(',', '.');
-                const fPocValue = parseFloat(normalizedPocValue);
+                const rawPoc = row[this.TsFields.POC];
+                const fPoc = this._normalizePocValue(rawPoc);
+                row[this.TsFields.POC] = isNaN(fPoc) ? "0.00" : fPoc.toFixed(2);
 
-                if (isNaN(fPocValue)) {
-                    aValidationErrors.push(this.i18n().getText("status.entry.invalidPoC", [sPocValue]));
-                } else {
-                    if (fPocValue < 0 || fPocValue > 100) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.PoCOutOfRange", [sPocValue]));
-                    }
-                    const sDecimalPart = normalizedPocValue.split(".")[1];
-                    if (sDecimalPart && sDecimalPart.length > 3) {
-                        aValidationErrors.push(this.i18n().getText("status.entry.PoCTooManyDecimals", [sPocValue]));
-                    }
+                const errors = [];
+                if (isNaN(fPoc)) {
+                    errors.push(this.i18n().getText("status.entry.invalidPoC", [rawPoc]));
+                } else if (fPoc < 0 || fPoc > 100) {
+                    errors.push(this.i18n().getText("status.entry.PoCOutOfRange", [fPoc.toFixed(2)]));
                 }
 
-                if (aValidationErrors.length > 0) {
-                    oExcelRow.dontCreate = true;
-                    oExcelRow[this.TsFields.STATUS] = "E";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = aValidationErrors.join("\n");
+                if (errors.length > 0) {
+                    this._setErrorStatus(row, errors.join("\n"));
                 } else {
-                    oExcelRow[this.TsFields.STATUS] = "P";
-                    oExcelRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pending");
+                    this._setPendingStatus(row);
                 }
             });
 
@@ -391,9 +313,53 @@ sap.ui.define([
             oViewModel.setProperty("/pocData", aPocData);
         },
 
+
+        _setErrorStatus(row, message) {
+            row.dontCreate = true;
+            row[this.TsFields.STATUS] = "E";
+            row[this.TsFields.STATUS_MESSAGE] = message;
+        },
+
+        _setPendingStatus(row) {
+            row[this.TsFields.STATUS] = "P";
+            row[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.pending");
+        },
+
+        _validateDates(row, fields) {
+            const errors = [];
+            const MIN_DATE = new Date(Date.UTC(1980, 0, 1));
+            fields.forEach(field => {
+                const value = row[field];
+                if (value) {
+                    if (typeof value === 'string' && !this._isValidDate(value)) {
+                        errors.push(this.i18n().getText("status.entry.invalidDate", [field, "DD.MM.YYYY"]));
+                    } else if (typeof value === 'number' && !this._isValidExcelDate(value)) {
+                        errors.push(this.i18n().getText("status.entry.invalidDate", [field, "DD.MM.YYYY"]));
+                    } else if (value instanceof Date && value < MIN_DATE) {
+                        errors.push(this.i18n().getText("status.entry.dateBefore1980", [field]));
+                    }
+                }
+            });
+            return errors;
+        },
+
+        _validateDateRange(start, end) {
+            if (start && end && start instanceof Date && end instanceof Date && end < start) {
+                return [this.i18n().getText("status.entry.endBeforeStart")];
+            }
+            return [];
+        },
+
+        _normalizePocValue(rawValue) {
+            const value = rawValue != null ? String(rawValue).trim() : "0";
+            const normalized = value.replace(/(?<=\d)[\.,\s](?=\d{3}(?:[\s.,]|$))/g, "").replace(',', '.');
+            return parseFloat(normalized);
+        },
+
+
         // === (Optional) Pflichtfeld-Validierung ===
-        _validateMandatoryFields: function (oExcelRow, bIsMilestone) {
-            return FieldDefinitions.getMandatoryFields(bIsMilestone)
+        _validateMandatoryFields: function (oExcelRow, bIsMilestone, bIsPoc) {
+            return FieldDefinitions.getMandatoryFields(bIsMilestone, bIsPoc)
                 .filter(fieldKey =>
                     oExcelRow[fieldKey] === undefined ||
                     oExcelRow[fieldKey] === null ||
@@ -405,10 +371,11 @@ sap.ui.define([
             const oPayload = {};
 
             if (bIsMilestoneUpdate) {
-                oPayload.ProjectElementDescription = oExcelRow[this.TsFields.MILESTONE_NAME]?.substring(0, 40) || "";
+                oPayload.ProjectElementDescription = oExcelRow[this.TsFields.WBS_MILESTONE_NAME]?.substring(0, 40) || "undefined";
                 oPayload.PlannedEndDate = this._formatDateToString(oExcelRow[this.TsFields.PLANNED_END_DATE]);
                 oPayload.IsMainMilestone = oExcelRow[this.TsFields.MILESTONE] === "P";
             } else {
+                oPayload.ProjectElementDescription = oExcelRow[this.TsFields.WBS_MILESTONE_NAME]?.substring(0, 40) || "undefined";
                 oPayload.PlannedStartDate = this._formatDateToString(oExcelRow[this.TsFields.PLANNED_START_DATE]);
                 oPayload.PlannedEndDate = this._formatDateToString(oExcelRow[this.TsFields.PLANNED_END_DATE]);
                 oPayload.YY1_PM_BaselineStart_PTD = this._formatDateToString(oExcelRow[this.TsFields.BASELINE_START_DATE]);
@@ -580,7 +547,7 @@ sap.ui.define([
                     return;
                 }
 
-                const sMilestoneName = oRow[this.TsFields.MILESTONE_NAME]?.substring(0, 40) || "";
+                const sMilestoneName = oRow[this.TsFields.WBS_MILESTONE_NAME]?.substring(0, 40) || "";
                 if (!sMilestoneName) {
                     oRow[this.TsFields.STATUS] = "E";
                     oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("entry.milestoneWrongPrefix");
@@ -676,29 +643,39 @@ sap.ui.define([
             return `${year}-${month}-${day}T00:00:00`;
         },
         _formatInputToDate: function (sDate) {
-            if (!sDate || typeof sDate !== 'string') {
-                return null;
-            }
+            if (typeof sDate !== 'string') return null;
+
             const cleaned = sDate.trim();
-            const dateFormats = [
-                { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, day: 1, month: 2, year: 3 }, // DD.MM.YYYY, DD-MM-YYYY, DD/MM/YYYY
-                { regex: /^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/, day: 3, month: 2, year: 1 }, // YYYY.MM.DD, YYYY-MM-DD
-                { regex: /^(\d{8})$/, day: 6, month: 4, year: 0 }, // YYYYMMDD
-                { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, day: 2, month: 1, year: 3 } // MM/DD/YYYY, MM-DD-YYYY
+            const formats = [
+                { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, order: ['day', 'month', 'year'] },   // DD.MM.YYYY
+                { regex: /^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/, order: ['year', 'month', 'day'] },   // YYYY-MM-DD
+                { regex: /^(\d{8})$/, order: ['year', 'month', 'day'], compact: true },               // YYYYMMDD
+                { regex: /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/, order: ['month', 'day', 'year'] }    // MM/DD/YYYY
             ];
 
-            for (const format of dateFormats) {
-                const match = cleaned.match(format.regex);
+            for (const { regex, order, compact } of formats) {
+                const match = cleaned.match(regex);
                 if (match) {
-                    const day = parseInt(match[format.day], 10);
-                    const month = parseInt(match[format.month], 10) - 1;
-                    const year = parseInt(match[format.year], 10);
-
-                    if (year < 1980) {
-                        return null;
+                    let parts;
+                    if (compact) {
+                        parts = {
+                            year: Number(cleaned.slice(0, 4)),
+                            month: Number(cleaned.slice(4, 6)),
+                            day: Number(cleaned.slice(6, 8))
+                        };
+                    } else {
+                        parts = {
+                            [order[0]]: Number(match[1]),
+                            [order[1]]: Number(match[2]),
+                            [order[2]]: Number(match[3])
+                        };
                     }
-                    const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
-                    if (date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day) {
+
+                    const { day, month, year } = parts;
+                    if ([day, month, year].some(n => isNaN(n)) || year < 1980) return null;
+
+                    const date = new Date(Date.UTC(year, month - 1, day));
+                    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
                         return date;
                     }
                 }
