@@ -233,7 +233,7 @@
                                 </VBox>
                                 <!-- Milestone -->
                                 <VBox>
-                                    <Label text="{i18n>table.header.milestoneName}"
+                                    <Label text="{i18n>table.header.wbsMilestoneName}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus
                                         text="{= ${milestoneName} ? ${milestoneName} : '-' }"
@@ -308,7 +308,7 @@
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
                         >
-                            <Text text="{i18n>table.header.milestoneName}" />
+                            <Text text="{i18n>table.header.wbsMilestoneName}" />
                         </Column>
                         <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline"
                         >

@@ -27,12 +27,10 @@ sap.ui.define([
         BASELINE_END_DATE: "baselineEndDate",
         POC: "poc",
         MILESTONE: "milestone",
-        MILESTONE_NAME: "milestoneName",
+        WBS_MILESTONE_NAME: "milestoneName",
         STATUS: "status",
         STATUS_MESSAGE: "statusMessage",
-        DESCRIPTION: "description",
-
-
+        DESCRIPTION: "description"
     });
 
     /**
@@ -49,46 +47,103 @@ sap.ui.define([
         EdmType,
         JSONModel,
 
+        getFieldOrder: function (bIsPoC = false) {
+            switch (true) {
+                case bIsPoC:
+                    return [
+                        ScheduleFields.PROJECT_ID,
+                        ScheduleFields.WBS_ID,
+                        ScheduleFields.POC,
+                        ScheduleFields.DESCRIPTION
+                    ];
+                default:
+                    return [
+                        ScheduleFields.PROJECT_ID,
+                        ScheduleFields.WBS_ID,
+                        ScheduleFields.PLANNED_START_DATE,
+                        ScheduleFields.PLANNED_END_DATE,
+                        ScheduleFields.BASELINE_START_DATE,
+                        ScheduleFields.BASELINE_END_DATE,
+                        ScheduleFields.MILESTONE,
+                        ScheduleFields.WBS_MILESTONE_NAME,
+                        ScheduleFields.DESCRIPTION
+                    ];
+            }
+        },
+
+        getDateFields: function () {
+            return [
+                ScheduleFields.PLANNED_START_DATE,
+                ScheduleFields.PLANNED_END_DATE,
+                ScheduleFields.BASELINE_START_DATE,
+                ScheduleFields.BASELINE_END_DATE,
+            ];
+        },
+
+        getMandatoryFields: function (bIsMilestone, bIsPoC) {
+            switch (true) {
+                case bIsPoC:
+                    return [
+                        ScheduleFields.PROJECT_ID,
+                        ScheduleFields.WBS_ID,
+                        // ScheduleFields.POC
+                    ];
+                case bIsMilestone:
+                    return [
+                        ScheduleFields.PROJECT_ID,
+                        // ScheduleFields.MILESTONE,
+                        ScheduleFields.WBS_MILESTONE_NAME,
+                        ScheduleFields.PLANNED_END_DATE
+                    ];
+                default:
+                    return [
+                        ScheduleFields.PROJECT_ID,
+                        ScheduleFields.WBS_ID,
+                        ScheduleFields.PLANNED_START_DATE,
+                        ScheduleFields.PLANNED_END_DATE
+                    ];
+            }
+        },
+
         /**
          * Gibt die Spaltenüberschriften für die schedule-Tabellen zurück.
          * @returns {Array} Array von Objekten mit key und propertyKey
          */
-
-
-        getMandatoryFields: function (bIsMilestone, isPoC) {
-            if (isPoC) {
-                return [ScheduleFields.PROJECT_ID, ScheduleFields.WBS_ID, ScheduleFields.POC];
-            } else if (bIsMilestone) {
-                return [ScheduleFields.PROJECT_ID, ScheduleFields.MILESTONE, ScheduleFields.MILESTONE_NAME, ScheduleFields.PLANNED_END_DATE];
-            } else {
-                return [ScheduleFields.PROJECT_ID, ScheduleFields.WBS_ID, ScheduleFields.PLANNED_START_DATE, ScheduleFields.PLANNED_END_DATE];
-            }
+        _buildTemplateColumn: function (field, mandatoryFields, i18n, width) {
+            return {
+                label: i18n.getText("table.header." + field) + (mandatoryFields.includes(field) ? " *" : ""),
+                key: field,
+                width: width
+            };
         },
 
         getScheduleTemplateColumnConfig: function (i18n) {
             const mandatoryFields = this.getMandatoryFields(false);
+            const f = (field, width) => this._buildTemplateColumn(field, mandatoryFields, i18n, width);
             return [
-                { label: mandatoryFields.includes(ScheduleFields.PROJECT_ID) ? i18n.getText("table.header." + ScheduleFields.PROJECT_ID) + " *" : i18n.getText("table.header." + ScheduleFields.PROJECT_ID), key: ScheduleFields.PROJECT_ID, width: 15 },
-                { label: mandatoryFields.includes(ScheduleFields.WBS_ID) ? i18n.getText("table.header." + ScheduleFields.WBS_ID) + " *" : i18n.getText("table.header." + ScheduleFields.WBS_ID), key: ScheduleFields.WBS_ID, width: 18 },
-                { label: mandatoryFields.includes(ScheduleFields.PLANNED_START_DATE) ? i18n.getText("table.header." + ScheduleFields.PLANNED_START_DATE) + " *" : i18n.getText("table.header." + ScheduleFields.PLANNED_START_DATE), key: ScheduleFields.PLANNED_START_DATE, width: 18 },
-                { label: mandatoryFields.includes(ScheduleFields.PLANNED_END_DATE) ? i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE) + " *" : i18n.getText("table.header." + ScheduleFields.PLANNED_END_DATE), key: ScheduleFields.PLANNED_END_DATE, width: 18 },
-                { label: i18n.getText("table.header." + ScheduleFields.BASELINE_START_DATE), key: ScheduleFields.BASELINE_START_DATE, width: 18 },
-                { label: i18n.getText("table.header." + ScheduleFields.BASELINE_END_DATE), key: ScheduleFields.BASELINE_END_DATE, width: 18 },
-                { label: i18n.getText("table.header." + ScheduleFields.MILESTONE) + " *" , key: ScheduleFields.MILESTONE, width: 15 },
-                { label: i18n.getText("table.header." + ScheduleFields.MILESTONE_NAME) + " *" , key: ScheduleFields.MILESTONE_NAME, width: 20 },
-                { label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION), key: ScheduleFields.DESCRIPTION, width: 25 }
+                f(ScheduleFields.PROJECT_ID, 15),
+                f(ScheduleFields.WBS_ID, 18),
+                f(ScheduleFields.PLANNED_START_DATE, 18),
+                f(ScheduleFields.PLANNED_END_DATE, 18),
+                f(ScheduleFields.BASELINE_START_DATE, 18),
+                f(ScheduleFields.BASELINE_END_DATE, 18),
+                f(ScheduleFields.MILESTONE, 15),
+                f(ScheduleFields.WBS_MILESTONE_NAME, 20),
+                f(ScheduleFields.DESCRIPTION, 25)
             ];
         },
 
         getPocTemplateColumnConfig: function (i18n) {
             const mandatoryFields = this.getMandatoryFields(false, true);
+            const f = (field, width) => this._buildTemplateColumn(field, mandatoryFields, i18n, width);
             return [
-                { label: mandatoryFields.includes(ScheduleFields.PROJECT_ID) ? i18n.getText("table.header." + ScheduleFields.PROJECT_ID) + " *" : i18n.getText("table.header." + ScheduleFields.PROJECT_ID), key: ScheduleFields.PROJECT_ID, width: 15 },
-                { label: mandatoryFields.includes(ScheduleFields.WBS_ID) ? i18n.getText("table.header." + ScheduleFields.WBS_ID) + " *" : i18n.getText("table.header." + ScheduleFields.WBS_ID), key: ScheduleFields.WBS_ID, width: 18 },
-                { label: mandatoryFields.includes(ScheduleFields.POC) ? i18n.getText("table.header." + ScheduleFields.POC) + " *" : i18n.getText("table.header." + ScheduleFields.POC), key: ScheduleFields.POC, width: 15 },
-                { label: i18n.getText("table.header." + ScheduleFields.DESCRIPTION), key: ScheduleFields.DESCRIPTION, width: 25 }
+                f(ScheduleFields.PROJECT_ID, 15),
+                f(ScheduleFields.WBS_ID, 18),
+                f(ScheduleFields.POC, 15),
+                f(ScheduleFields.DESCRIPTION, 25)
             ];
         },
+
 
 
         getScheduleTemplateExampleRow: function (i18n) {
@@ -101,7 +156,7 @@ sap.ui.define([
                 i18n.getText("template.column.example." + ScheduleFields.BASELINE_START_DATE),
                 i18n.getText("template.column.example." + ScheduleFields.BASELINE_END_DATE),
                 i18n.getText("template.column.example." + ScheduleFields.MILESTONE),
-                i18n.getText("template.column.example." + ScheduleFields.MILESTONE_NAME),
+                i18n.getText("template.column.example." + ScheduleFields.WBS_MILESTONE_NAME),
                 i18n.getText("template.column.example." + ScheduleFields.DESCRIPTION)
             ];
         },
