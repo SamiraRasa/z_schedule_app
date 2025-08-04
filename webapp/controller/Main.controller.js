@@ -292,13 +292,13 @@ sap.ui.define([
                 }
 
                 const rawPoc = row[this.TsFields.POC];
-                const fPoc = this._normalizePocValue(rawPoc);
+                let fPoc = this._normalizePocValue(rawPoc);
                 row[this.TsFields.POC] = isNaN(fPoc) ? "0.00" : fPoc.toFixed(2);
-
-                const errors = [];
                 if (isNaN(fPoc)) {
-                    errors.push(this.i18n().getText("status.entry.invalidPoC", [rawPoc]));
-                } else if (fPoc < 0 || fPoc > 100) {
+                    fPoc = 0.00;
+                }
+                const errors = [];
+                if (fPoc < 0 || fPoc > 100) {
                     errors.push(this.i18n().getText("status.entry.PoCOutOfRange", [fPoc.toFixed(2)]));
                 }
 
@@ -351,9 +351,12 @@ sap.ui.define([
         },
 
         _normalizePocValue(rawValue) {
-            const value = rawValue != null ? String(rawValue).trim() : "0";
-            const normalized = value.replace(/(?<=\d)[\.,\s](?=\d{3}(?:[\s.,]|$))/g, "").replace(',', '.');
-            return parseFloat(normalized);
+            let value = (rawValue != null ? String(rawValue).trim() : "") || "0.00";
+            if (value.includes(',') && value.includes('.')) {
+                value = value.replace('.', '');
+            }
+            value = value.replace(',', '.');
+            return parseFloat(value) || 0.00;
         },
 
 
