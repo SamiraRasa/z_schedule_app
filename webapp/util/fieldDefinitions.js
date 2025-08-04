@@ -27,7 +27,7 @@ sap.ui.define([
         BASELINE_END_DATE: "baselineEndDate",
         POC: "poc",
         MILESTONE: "milestone",
-        WBS_MILESTONE_NAME: "milestoneName",
+        WBS_MILESTONE_NAME: "wbsMilestoneName",
         STATUS: "status",
         STATUS_MESSAGE: "statusMessage",
         DESCRIPTION: "description"
