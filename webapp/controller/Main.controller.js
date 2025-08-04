@@ -199,8 +199,14 @@ sap.ui.define([
                     const oEntry = {};
 
                     aFieldOrder.forEach((fieldKey, i) => {
-                        oEntry[fieldKey] = row[i];
+                        oEntry[fieldKey] = (
+                            fieldKey === this.TsFields.PROJECT_ID
+
+                        ) ? (row[i] ? String(row[i]) : "")
+                            : row[i] || "";
+
                     });
+
 
                     const milestoneValue = oEntry[this.TsFields.MILESTONE]?.trim();
                     if (milestoneValue) {
@@ -451,6 +457,7 @@ sap.ui.define([
 
         _updatePoC: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
+
             try {
                 const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.WBS_ID], false);
                 if (oUUIDs === null) {
@@ -472,10 +479,16 @@ sap.ui.define([
                         },
                         error: oError => {
                             let sErrorMsg;
-                            try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
+                            try {
+                                sErrorMsg = JSON.parse(oError.responseText).error?.message?.value;
+                            } catch (e) { sErrorMsg = null; }
                             oRow[this.TsFields.STATUS] = "E";
                             oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                            reject(oError);
+                            reject({
+                                status: "E",
+                                statusMessage: sErrorMsg
+
+                            });
                         }
                     });
                 });
@@ -513,6 +526,7 @@ sap.ui.define([
                 throw error;
             }
         },
+      
 
         _updateProjectElement: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
@@ -537,14 +551,23 @@ sap.ui.define([
                             try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                             oRow[this.TsFields.STATUS] = "E";
                             oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                            reject(oError);
+                        
+                            let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
+                            cleanUUID = cleanUUID.replace(/-/g, "");
+
+                            reject({
+                                statusMessage: sErrorMsg.replace(cleanUUID, oRow[this.TsFields.WBS_ID]),
+                                status: "E"
+                            });
                         }
                     });
                 });
             } catch (error) {
                 oRow[this.TsFields.STATUS] = error.status || "E";
                 oRow[this.TsFields.STATUS_MESSAGE] = error.statusMessage || this.i18n().getText("status.entry.cantReadErrorTextResult");
+                
             }
+
         },
 
         _createMilestones: async function (oRow) {
@@ -595,11 +618,14 @@ sap.ui.define([
                                 resolve();
                             },
                             error: (oErr) => {
+
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
-                                oRow[this.TsFields.STATUS] = "E";
-                                oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.milestoneUpdateFailed");
-                                reject(oErr);
+                                reject({
+                                    status: "E",
+                                    messageText: sErrorMsg
+
+                                });
                             }
                         });
                     });
@@ -619,18 +645,24 @@ sap.ui.define([
                                 resolve();
                             },
                             error: (oErr) => {
+
                                 let sErrorMsg;
                                 try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
                                 oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                                reject(oErr);
+                                reject({
+                                    status: "E",
+                                    messageText: sErrorMsg
+
+                                });
                             }
                         });
                     });
                 }
             } catch (error) {
+
                 oRow[this.TsFields.STATUS] = error.status || "E";
-                oRow[this.TsFields.STATUS_MESSAGE] = error.messageBoxText || this.i18n().getText("status.entry.cantReadErrorTextResult");
+                oRow[this.TsFields.STATUS_MESSAGE] = error.messageText || this.i18n().getText("status.entry.cantReadErrorTextResult");
             }
         },
 
@@ -761,10 +793,10 @@ sap.ui.define([
             var oPlannedStartDate = this.byId("plannedStartDate").getDateValue();
             var oPlannedEndDate = this.byId("plannedEndDate").getDateValue();
             var sMilestone = this.byId("selectMilestone").getSelectedKey();
-  
-  
+
+
             if (sProjectId) {
-                aFilters.push(new Filter("projectId", FilterOperator.EQ, sProjectId));
+                aFilters.push(new Filter("projectId", FilterOperator.Contains, sProjectId));
             }
             if (sWbsId) {
                 aFilters.push(new Filter("wbsId", FilterOperator.Contains, sWbsId));
