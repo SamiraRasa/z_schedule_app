@@ -187,7 +187,6 @@ sap.ui.define([
 
                     });
 
-
                     const milestoneValue = oEntry[this.TsFields.MILESTONE]?.trim();
                     if (milestoneValue) {
 
@@ -454,9 +453,12 @@ sap.ui.define([
                             } catch (e) { sErrorMsg = null; }
                             oRow[this.TsFields.STATUS] = "E";
                             oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
+
+                            let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
+                            cleanUUID = cleanUUID.replace(/-/g, "");
                             reject({
                                 status: "E",
-                                statusMessage: sErrorMsg
+                                statusMessage: sErrorMsg.replace(cleanUUID, oRow[this.TsFields.WBS_ID]),
 
                             });
                         }
@@ -496,7 +498,7 @@ sap.ui.define([
                 throw error;
             }
         },
-      
+
 
         _updateProjectElement: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
@@ -521,7 +523,7 @@ sap.ui.define([
                             try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                             oRow[this.TsFields.STATUS] = "E";
                             oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                        
+
                             let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
                             cleanUUID = cleanUUID.replace(/-/g, "");
 
@@ -535,7 +537,7 @@ sap.ui.define([
             } catch (error) {
                 oRow[this.TsFields.STATUS] = error.status || "E";
                 oRow[this.TsFields.STATUS_MESSAGE] = error.statusMessage || this.i18n().getText("status.entry.cantReadErrorTextResult");
-                
+
             }
 
         },
@@ -587,14 +589,18 @@ sap.ui.define([
                                 oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.milestone.updated");
                                 resolve();
                             },
-                            error: (oErr) => {
-
+                            error: oError => {
                                 let sErrorMsg;
-                                try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
-                                reject({
-                                    status: "E",
-                                    messageText: sErrorMsg
+                                try { sErrorMsg = JSON.parse(oError.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
+                                oRow[this.TsFields.STATUS] = "E";
+                                oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
 
+                                let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
+                                cleanUUID = cleanUUID.replace(/-/g, "");
+
+                                reject({
+                                    messageText: sErrorMsg.replace(cleanUUID, oRow[this.TsFields.PROJECT_ID]),
+                                    status: "E"
                                 });
                             }
                         });
@@ -620,9 +626,13 @@ sap.ui.define([
                                 try { sErrorMsg = JSON.parse(oErr.responseText).error?.message?.value; } catch (e) { sErrorMsg = null; }
                                 oRow[this.TsFields.STATUS] = "E";
                                 oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
+
+                                let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
+                                cleanUUID = cleanUUID.replace(/-/g, "");
+
                                 reject({
                                     status: "E",
-                                    messageText: sErrorMsg
+                                    messageText: sErrorMsg.replace(cleanUUID, oRow[this.TsFields.PROJECT_ID]),
 
                                 });
                             }

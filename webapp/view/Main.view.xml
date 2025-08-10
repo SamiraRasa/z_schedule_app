@@ -214,7 +214,7 @@
                                     <Label text="{i18n>table.header.plannedEndDate}"
                                         class="sapUiTinyMarginBottom" />
                                     <Text
-                                        text="{= ${plannedEndDate} ? ${plannedEndDate', formatter: '.formatter.formatDate'} : '-' }"
+                                        text="{= ${plannedEndDate} ? ${path: 'plannedEndDate', formatter: '.formatter.formatDate'} : '-' }" 
                                         
                                     />
                                 </VBox>
@@ -236,7 +236,7 @@
                                     <Label text="{i18n>table.header.wbsMilestoneName}"
                                         class="sapUiTinyMarginBottom" />
                                     <ObjectStatus
-                                        text="{= ${milestoneName} ? ${milestoneName} : '-' }"
+                                        text="{= ${wbsMilestoneName} ? ${wbsMilestoneName} : '-' }"
                                         state="Information" class="sapUiTinyMarginBottom" />
                                     <Label text="{i18n>table.header.milestone}"
                                         class="sapUiTinyMarginBottom" />
@@ -338,7 +338,7 @@
                                     text="{path: 'baselineEndDate', formatter: '.formatter.formatDate'}" />
 
                                 <Text text="{milestone}" />
-                                <Text text="{milestoneName}" />
+                                <Text text="{wbsMilestoneName}" />
                                 <ObjectStatus
                                     text="{path: 'status', formatter: '.formatter.formatStatusText'}"
                                     icon="{path: 'status', formatter: '.formatter.formatStatusIcon'}"

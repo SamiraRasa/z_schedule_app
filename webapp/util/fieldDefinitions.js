@@ -91,7 +91,7 @@ sap.ui.define([
                 case bIsMilestone:
                     return [
                         ScheduleFields.PROJECT_ID,
-                        // ScheduleFields.MILESTONE,
+                        ScheduleFields.MILESTONE,
                         ScheduleFields.WBS_MILESTONE_NAME,
                         ScheduleFields.PLANNED_END_DATE
                     ];
