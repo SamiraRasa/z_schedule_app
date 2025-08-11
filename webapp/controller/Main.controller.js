@@ -369,13 +369,15 @@ sap.ui.define([
                 );
         },
 
-        _buildSchedulePayload: function (oExcelRow, bIsMilestoneUpdate = false) {
+        _buildSchedulePayload: function (oExcelRow, bIsMilestoneUpdate = false, bProjectIsReleased = false) {
             const oPayload = {};
 
             if (bIsMilestoneUpdate) {
                 oPayload.ProjectElementDescription = oExcelRow[this.TsFields.WBS_MILESTONE_NAME]?.substring(0, 40) || "undefined";
                 oPayload.PlannedEndDate = this._formatDateToString(oExcelRow[this.TsFields.PLANNED_END_DATE]);
-                oPayload.IsMainMilestone = oExcelRow[this.TsFields.MILESTONE] === "P";
+                if (!bProjectIsReleased) {
+                    oPayload.IsMainMilestone = oExcelRow[this.TsFields.MILESTONE] === "P";
+                }
             } else {
                 oPayload.ProjectElementDescription = oExcelRow[this.TsFields.WBS_MILESTONE_NAME]?.substring(0, 40) || "undefined";
                 oPayload.PlannedStartDate = this._formatDateToString(oExcelRow[this.TsFields.PLANNED_START_DATE]);
@@ -479,7 +481,7 @@ sap.ui.define([
                             new Filter("ProjectElement", FilterOperator.EQ, sWbsId),
                         ],
                         urlParameters: {
-                            $select: "ProjectElementUUID,ProjectUUID"
+                            $select: "ProjectElementUUID,ProjectUUID,ProcessingStatus"
                         },
                         success: oData => resolve(oData.results || []),
                         error: oErr => reject(oErr)
@@ -492,7 +494,8 @@ sap.ui.define([
 
                 return {
                     ProjectElementUUID: aElements[0].ProjectElementUUID,
-                    ProjectUUID: aElements[0].ProjectUUID
+                    ProjectUUID: aElements[0].ProjectUUID,
+                    ProcessingStatus: aElements[0].ProcessingStatus
                 };
             } catch (error) {
                 throw error;
@@ -545,8 +548,9 @@ sap.ui.define([
         _createMilestones: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
             try {
-                const oUUIDs = await this._getProjectElementData(oRow[this.TsFields.PROJECT_ID], true);
-                if (!oUUIDs) {
+                const oProject = await this._getProjectElementData(oRow[this.TsFields.PROJECT_ID], true);
+
+                if (!oProject) {
                     oRow[this.TsFields.STATUS] = "E";
                     oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.entry.projectIdNotFound", [oRow[this.TsFields.PROJECT_ID]]);
                     return;
@@ -570,7 +574,7 @@ sap.ui.define([
                 const oExistingMilestone = await new Promise((resolve, reject) => {
                     oScheduleApiModel.read("/A_EnterpriseProjectElement", {
                         filters: [
-                            new Filter("ProjectUUID", FilterOperator.EQ, oUUIDs.ProjectUUID),
+                            new Filter("ProjectUUID", FilterOperator.EQ, oProject.ProjectUUID),
                             new Filter("ProjectElementDescription", FilterOperator.StartsWith, sPrefix),
                             new Filter("IsProjectMilestone", FilterOperator.EQ, "X")
                         ],
@@ -580,8 +584,17 @@ sap.ui.define([
                     });
                 });
 
+                const isProjectReleased = oProject.ProcessingStatus === "10" || oProject.ProcessingStatus === "12";
+                const newMilestoneType = oRow[this.TsFields.MILESTONE] === 'P';
+
                 if (oExistingMilestone) {
-                    const oPayload = this._buildSchedulePayload(oRow, true);
+                    if (isProjectReleased && oExistingMilestone.IsMainMilestone !== newMilestoneType) {
+                        oRow[this.TsFields.STATUS] = "E";
+                        oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("error.milestoneTypeChangeNotAllowed");
+                        return;
+                    }
+
+                    const oPayload = this._buildSchedulePayload(oRow, true, oProject.ProcessingStatus === "10" || oProject.ProcessingStatus === "12"); // Released Status = 10
                     await new Promise((resolve, reject) => {
                         oScheduleApiModel.update(`/A_EnterpriseProjectElement(guid'${oExistingMilestone.ProjectElementUUID}')`, oPayload, {
                             success: () => {
@@ -595,7 +608,7 @@ sap.ui.define([
                                 oRow[this.TsFields.STATUS] = "E";
                                 oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
 
-                                let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
+                                let cleanUUID = String(oProject.ProjectUUID).toUpperCase();
                                 cleanUUID = cleanUUID.replace(/-/g, "");
 
                                 reject({
@@ -614,7 +627,7 @@ sap.ui.define([
                         IsMainMilestone: oRow[this.TsFields.MILESTONE] === "P"
                     };
                     await new Promise((resolve, reject) => {
-                        oScheduleApiModel.create(`/A_EnterpriseProject(guid'${oUUIDs.ProjectUUID}')/to_EnterpriseProjectElement`, oPayload, {
+                        oScheduleApiModel.create(`/A_EnterpriseProject(guid'${oProject.ProjectUUID}')/to_EnterpriseProjectElement`, oPayload, {
                             success: () => {
                                 oRow[this.TsFields.STATUS] = "S";
                                 oRow[this.TsFields.STATUS_MESSAGE] = this.i18n().getText("status.milestone.created");
@@ -627,7 +640,7 @@ sap.ui.define([
                                 oRow[this.TsFields.STATUS] = "E";
                                 oRow[this.TsFields.STATUS_MESSAGE] = sErrorMsg || this.i18n().getText("status.entry.cantReadErrorTextResult");
 
-                                let cleanUUID = String(oUUIDs.ProjectUUID).toUpperCase();
+                                let cleanUUID = String(oProject.ProjectUUID).toUpperCase();
                                 cleanUUID = cleanUUID.replace(/-/g, "");
 
                                 reject({
