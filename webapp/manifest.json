@@ -31,6 +31,15 @@
           "localUri": "localService/mainService/metadata.xml",
           "odataVersion": "2.0"
         }
+      },
+      "scheduleclosed": {
+        "uri": "sap/opu/odata/sap/YY1_PM_SCHEDULECLOSED_API_CDS/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/scheduleclosed/metadata.xml",
+          "odataVersion": "2.0"
+        }
       }
     },
     "crossNavigation": {
@@ -95,6 +104,11 @@
       },
       "enterpriseProjectAPI": {
         "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
+      },
+       "scheduleclosedAPI": {
+        "dataSource": "scheduleclosed",
         "preload": true,
         "settings": {}
       }

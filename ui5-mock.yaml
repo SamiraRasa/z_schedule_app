@@ -17,7 +17,7 @@ server:
           url: https://ui5.sap.com
         backend:
           - path: /sap
-            url: https://my421388-api.s4hana.cloud.sap
+            url:  https://my419285-api.s4hana.cloud.sap
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

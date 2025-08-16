@@ -7,7 +7,7 @@
 |**Generation Platform**<br>SAP Business Application Studio|
 |**Template Used**<br>Basic V2|
 |**Service Type**<br>OData Url|
-|**Service URL**<br>https://my421388-api.s4hana.cloud.sap/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002|
+|**Service URL**<br> https://my419285-api.s4hana.cloud.sap/sap/opu/odata/sap/API_ENTERPRISE_PROJECT_SRV;v=0002|
 |**Module Name**<br>schedule_upload|
 |**Application Title**<br>Schedule Upload |
 |**Namespace**<br>at.zeta.ppm|

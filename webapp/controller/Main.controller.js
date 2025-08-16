@@ -65,8 +65,8 @@ sap.ui.define([
 
         // === Excel Datei einlesen und verarbeiten ===
         onFileChange: async function (oEvent) {
-            BusyIndicator.show(0);
 
+            BusyIndicator.show(0);
             this._reset();
             const oViewModel = this.getViewModel();
 
@@ -248,6 +248,37 @@ sap.ui.define([
             const oViewModel = this.getViewModel();
             const aScheduleData = oViewModel.getProperty("/scheduleData") || [];
             const aPocData = oViewModel.getProperty("/pocData") || [];
+            // Ticket ERP-16977 ClosingDate
+            const aClosingPeriods = await this._getClosingPeriods();
+            const today = new Date();
+            // const today = new Date("2025-08-14T12:57:00Z");
+            today.setHours(0, 0, 0, 0);
+
+            const isUploadAllowed = aClosingPeriods.some(period => period.temporaryOpen) ||
+                aClosingPeriods.some(period => {
+                    const startDate = new Date(period.startDate);
+                    const endDate = new Date(period.endDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setHours(0, 0, 0, 0);
+                    return today >= startDate && today <= endDate;
+                });
+
+            if (!isUploadAllowed) {
+                aScheduleData.forEach(row => {
+                    if (!row.dontCreate) {
+                        this._setErrorStatus(row, this.i18n().getText("error.uploadOutsideAllowedPeriod"));
+                    }
+                });
+                aPocData.forEach(row => {
+                    if (!row.dontCreate) {
+                        this._setErrorStatus(row, this.i18n().getText("error.uploadOutsideAllowedPeriod"));
+                    }
+                });
+                oViewModel.setProperty("/scheduleData", aScheduleData);
+                oViewModel.setProperty("/pocData", aPocData);
+                MessageBox.error(this.i18n().getText("error.uploadOutsideAllowedPeriod"));
+                return;
+            }
 
             aScheduleData.forEach(row => {
                 if (row.dontCreate) return;
@@ -359,7 +390,7 @@ sap.ui.define([
         },
 
 
-        // === (Optional) Pflichtfeld-Validierung ===
+        // === Pflichtfeld-Validierung ===
         _validateMandatoryFields: function (oExcelRow, bIsMilestone, bIsPoc) {
             return FieldDefinitions.getMandatoryFields(bIsMilestone, bIsPoc)
                 .filter(fieldKey =>
@@ -501,7 +532,6 @@ sap.ui.define([
                 throw error;
             }
         },
-
 
         _updateProjectElement: async function (oRow) {
             const oScheduleApiModel = this.getViewModel("enterpriseProjectAPI");
@@ -659,6 +689,42 @@ sap.ui.define([
             }
         },
 
+        _getClosingPeriods: async function () {
+            const oScheduleClosedModel = this.getView().getModel("scheduleclosedAPI");
+            if (!oScheduleClosedModel) {
+                throw new Error("OData model 'scheduleclosedAPI' not found.");
+            }
+            try {
+                const aPeriods = await new Promise((resolve, reject) => {
+                    oScheduleClosedModel.read("/YY1_PM_ScheduleCloseD_API", {
+                        urlParameters: {
+                            $select: "SAP_UUID,UploadStartDate,UploadEndDate,Temporaryopen"
+                        },
+                        success: oData => resolve(oData.results || []),
+                        error: oErr => reject(oErr)
+                    });
+                });
+                return aPeriods.map(period => {
+                    const startDate = new Date(period.UploadStartDate);
+                    const endDate = new Date(period.UploadEndDate);
+                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                        console.warn("Invalid date detected:", period);
+                        return null;
+                    }
+                    return {
+                        uuid: period.SAP_UUID,
+                        startDate: startDate,
+                        endDate: endDate,
+                        temporaryOpen: period.Temporaryopen === "true" || period.Temporaryopen === true || period.Temporaryopen === "X"
+                    };
+                }).filter(period => period !== null);
+            } catch (error) {
+                console.error("Error fetching closing periods:", error);
+                MessageBox.error(this.i18n().getText("error.fetchingClosingPeriods", [error.message]));
+                return [];
+            }
+        },
+
         _formatDateToString: function (oDate) {
             if (!(oDate instanceof Date) || isNaN(oDate)) {
                 return null;
@@ -668,6 +734,7 @@ sap.ui.define([
             const day = String(oDate.getUTCDate()).padStart(2, "0");
             return `${year}-${month}-${day}T00:00:00`;
         },
+
         _formatInputToDate: function (sDate) {
             if (typeof sDate !== 'string') return null;
 
